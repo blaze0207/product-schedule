@@ -1,31 +1,31 @@
 ﻿@echo off
 chcp 65001 > nul
-title 產銷表更新 - 自動雲端同步版
+title 產銷表更新 - GitHub 自動同步版
 echo --------------------------------------------------
-echo [1/3] 正在執行 Python 更新資料...
+echo [1/3] 正在更新產銷表數據...
 cd /d C:\product_schedule_test
+
+:: 確保 Git 記住憑證
+git config --global credential.helper wincred
+
 C:\Users\blaze\AppData\Local\Programs\Python\Python313\python.exe generate_dashboard.py
 
 if %ERRORLEVEL% NEQ 0 (
-    echo [錯誤] Python 執行失敗，請檢查 Excel！
+    echo [錯誤] 資料產出失敗！
     pause
     exit
 )
 
-echo [2/3] 正在同步到 GitHub 雲端...
-:: 執行 Git 同步指令
+echo [2/3] 正在同步至 GitHub (blaze0207/product-schedule)...
 git add production_dashboard.html
-git commit -m "自動更新產銷表: %date% %time%"
+git commit -m "Auto Update: %date% %time%"
 git push origin main
 
 if %ERRORLEVEL% EQU 0 (
-    echo [3/3] 成功！雲端網頁已更新。
+    echo [3/3] 成功！請查看: https://blaze0207.github.io/product-schedule/production_dashboard.html
     echo --------------------------------------------------
-    echo 雲端網址: https://github.com/您的帳號/product-schedule/
-    echo (請將您的帳號填入上方路徑)
-    start production_dashboard.html
 ) else (
-    echo [失敗] 無法上傳到 GitHub，請檢查網路或 Git 設定。
+    echo [失敗] 上傳失敗！請先手動執行一次 git push 以驗證帳密。
     pause
 )
 
