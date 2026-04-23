@@ -9,7 +9,8 @@
         :root { --primary: #2563eb; --bg: #f8fafc; --text: #1e293b; }
         body { font-family: "Microsoft JhengHei", sans-serif; background: var(--bg); color: var(--text); margin: 0; padding: 10px; }
         .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; flex-wrap: wrap; gap: 10px; }
-        h1 { font-size: 1.5rem; margin: 0; }
+        h1 { font-size: 1.5rem; margin: 0; display: flex; align-items: center; flex-wrap: wrap; gap: 10px; }
+        .total-badge { color: #ef4444; font-weight: 900; background: #fee2e2; padding: 4px 12px; border-radius: 20px; border: 2px solid #ef4444; font-size: 1.1rem; }
         .info-bar { font-size: 11px; color: #64748b; margin-bottom: 15px; background: #fff; padding: 10px; border-radius: 6px; border: 1px solid #e2e8f0; line-height: 1.6; border-left: 4px solid #2563eb; }
         .search-box { padding: 12px; width: 100%; max-width: 300px; border: 1px solid #ddd; border-radius: 8px; font-size: 16px; box-sizing: border-box; }
         .filter-group { margin-bottom: 15px; display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
@@ -39,13 +40,13 @@
 </head>
 <body>
     <div class="header">
-        <h1>5月產銷表</h1>
+        <h1>5月產銷表 <span class="total-badge">排產總量: 1,459.6 T</span></h1>
         <input type="text" id="searchInput" class="search-box" placeholder="搜尋機台、批號或規格...">
     </div>
     
     <div class="info-bar">
-        📄 檔案: DTYMay26產銷260416-1450+300+30.xlsx (2026-04-23 21:01:24)<br>
-        🕒 網頁更新: 21:02:08
+        📄 檔案: DTYMay26產銷260416-1450+300+30.xlsx (2026-04-23 21:05:39)<br>
+        🕒 網頁更新: 21:22:08
     </div>
 
     <div class="filter-group">
