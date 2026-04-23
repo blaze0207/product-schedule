@@ -1,0 +1,138 @@
+
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>5月產銷表</title>
+    <style>
+        :root { --primary: #2563eb; --bg: #f8fafc; --text: #1e293b; }
+        body { font-family: "Microsoft JhengHei", sans-serif; background: var(--bg); color: var(--text); margin: 0; padding: 10px; }
+        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; flex-wrap: wrap; gap: 10px; }
+        h1 { font-size: 1.5rem; margin: 0; }
+        .info-bar { font-size: 11px; color: #64748b; margin-bottom: 15px; background: #fff; padding: 10px; border-radius: 6px; border: 1px solid #e2e8f0; line-height: 1.6; border-left: 4px solid #2563eb; }
+        .search-box { padding: 12px; width: 100%; max-width: 300px; border: 1px solid #ddd; border-radius: 8px; font-size: 16px; box-sizing: border-box; }
+        .filter-group { margin-bottom: 15px; display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+        .btn { padding: 10px 16px; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; transition: 0.2s; font-size: 14px; }
+        .btn-default { background: #e2e8f0; color: #475569; }
+        .btn-primary { background: #2563eb; color: white; }
+        .card { background: white; border-radius: 12px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); padding: 10px; overflow-x: auto; }
+        table { width: 100%; border-collapse: collapse; }
+        th { background: #f1f5f9; padding: 12px; text-align: left; border-bottom: 2px solid #e2e8f0; font-size: 13px; color: #64748b; }
+        td { padding: 12px; border-bottom: 1px solid #f1f5f9; font-size: 14px; vertical-align: top; }
+        .badge { padding: 4px 8px; border-radius: 6px; font-size: 12px; font-weight: bold; }
+        .machine-tag { background: #dbeafe; color: #1e40af; }
+        .grade-tag { display: inline-block; padding: 2px 6px; border-radius: 4px; font-size: 11px; margin-right: 4px; margin-bottom: 4px; color: white; }
+        .grade-A { background: #22c55e; } .grade-AX { background: #3b82f6; } .grade-B { background: #f59e0b; } .grade-C { background: #64748b; } .grade-Other { background: #94a3b8; }
+        .progress-bar-container { width: 100%; max-width: 80px; height: 8px; background: #e2e8f0; border-radius: 4px; display: inline-block; overflow: hidden; vertical-align: middle; }
+        .progress-inner { height: 100%; background: #22c55e; }
+        .status-negative { color: #ef4444; font-weight: bold; }
+        .status-positive { color: #22c55e; font-weight: bold; }
+        @media screen and (max-width: 768px) {
+            thead { display: none; }
+            tr { display: block; margin-bottom: 15px; border: 1px solid #e2e8f0; border-radius: 12px; padding: 10px; background: #fff; }
+            td { display: block; border: none; border-bottom: 1px solid #f1f5f9; position: relative; padding-left: 40%; text-align: right; min-height: 24px; }
+            td:last-child { border-bottom: none; }
+            td::before { content: attr(data-label); position: absolute; left: 10px; width: 35%; text-align: left; font-weight: bold; color: #64748b; font-size: 13px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>5月產銷表</h1>
+        <input type="text" id="searchInput" class="search-box" placeholder="搜尋機台、批號或規格...">
+    </div>
+    
+    <div class="info-bar">
+        📄 檔案: DTYMay26產銷260416-1450+300+30.xlsx (2026-04-23 15:47:59)<br>
+        🕒 網頁更新: 16:02:10
+    </div>
+
+    <div class="filter-group">
+        <span>工程師:</span>
+        <button class="btn btn-primary active" onclick="setEngineer('all', this)">全部</button>
+        <button class="btn btn-default" onclick="setEngineer('wu', this)">吳</button>
+        <button class="btn btn-default" onclick="setEngineer('lo', this)">羅</button>
+    </div>
+
+    <div class="card">
+        <table id="dataTable">
+            <thead>
+                <tr>
+                    <th>機台</th><th>批號</th><th>規格</th><th>排產日期</th><th>天數</th><th>T/D</th><th>排產總量 (KG)</th><th>已繳庫 (KG)</th><th>進度</th><th>需求量 (KG)</th><th>POY批號</th>
+                </tr>
+            </thead>
+            <tbody id="tableBody"></tbody>
+        </table>
+    </div>
+
+    <script>
+        const rawData = [{"machine": "A07", "batch": "FD2FA042", "spec": "75/72 CE", "date_range": "4/17-5/31", "days": 30, "td": 0.7, "target": 21000.0, "stored": 1800, "grades": {"A": 1800}, "demand": -19200.0, "pct": 8.571428571428571, "poy": "FP01422"}, {"machine": "A08", "batch": "FD2FA032", "spec": "75/36 SDR", "date_range": "4/1-5/31", "days": 30, "td": 0.7, "target": 21000.0, "stored": 5340, "grades": {"A": 5340}, "demand": -15660.0, "pct": 25.428571428571427, "poy": "FP81386R"}, {"machine": "A08", "batch": "FD2FA032 ", "spec": "75/36 SDR", "date_range": "3/30-5/31", "days": 30, "td": 0.7, "target": 21000.0, "stored": 5340, "grades": {"A": 5340}, "demand": -15660.0, "pct": 25.428571428571427, "poy": "FP81386R"}, {"machine": "A09", "batch": "FD2F42S2K", "spec": "75/24/2 SDR2", "date_range": "3/26-5/31", "days": 30, "td": 0.7, "target": 21000.0, "stored": 22200, "grades": {"A": 22200}, "demand": 1200.0, "pct": 100, "poy": "FP81363R"}, {"machine": "A09", "batch": "FD2F42S2K ", "spec": "75/24/2 SDR2", "date_range": "4/1-5/31", "days": 30, "td": 0.7, "target": 21000.0, "stored": 22200, "grades": {"A": 22200}, "demand": 1200.0, "pct": 100, "poy": "FP81363R"}, {"machine": "A11", "batch": "FD2F1YR2", "spec": "75/36 HC*", "date_range": "3/2-5/31", "days": 30, "td": 1.2, "target": 36000.0, "stored": 27048, "grades": {"A": 27048}, "demand": -8952.0, "pct": 75.13333333333333, "poy": "FP81857R 67T吃空"}, {"machine": "A12", "batch": "FD2F42T2K", "spec": "75/24/2 SDR1", "date_range": "3/6-5/31", "days": 30, "td": 1.5, "target": 45000.0, "stored": 44820, "grades": {"A": 44820}, "demand": -180.0, "pct": 99.6, "poy": "FP81363R"}, {"machine": "A15", "batch": "FD2F43G2 ", "spec": "150/48 HC*", "date_range": "4/16-4/28", "days": 12, "td": 2, "target": 24000, "stored": 750, "grades": {"A": 750}, "demand": -23250, "pct": 3.125, "poy": "FP82781"}, {"machine": "A15", "batch": "FD2F43D2 like", "spec": "150/48 CDR*", "date_range": "4/29-5/31", "days": 30, "td": 2, "target": 60000, "stored": 0, "grades": {}, "demand": -60000, "pct": 0.0, "poy": "FP82781"}, {"machine": "A18", "batch": "FD2F42M2K", "spec": "75/24/2 SDR2", "date_range": "2/23-5/31", "days": 30, "td": 1.5, "target": 45000.0, "stored": 65880, "grades": {"A": 65880}, "demand": 20880.0, "pct": 100, "poy": "FP81364R"}, {"machine": "A19", "batch": "FD2F43B1", "spec": "150/48 SDr", "date_range": "4/7-5/31", "days": 30, "td": 1.2, "target": 36000.0, "stored": 20100, "grades": {"A": 20100}, "demand": -15900.0, "pct": 55.833333333333336, "poy": "FP82166R>82167R"}, {"machine": "A19", "batch": "FD2F42Y1", "spec": "150/48 SDR", "date_range": "3/30-5/31", "days": 30, "td": 1.2, "target": 36000.0, "stored": 16260, "grades": {"A": 16260}, "demand": -19740.0, "pct": 45.166666666666664, "poy": "FP82163R>82167R"}, {"machine": "A20", "batch": "FD2F29C2G", "spec": "100/72 PFR(Petal", "date_range": "2/23-5/31", "days": 30, "td": 1.6, "target": 48000.0, "stored": 6840, "grades": {"A": 6840}, "demand": -41160.0, "pct": 14.249999999999998, "poy": "FP81370R>81385R"}, {"machine": "A21", "batch": "FD2F29I1", "spec": "100/36 SDr退稅", "date_range": "4/7-5/31", "days": 30, "td": 2, "target": 60000, "stored": 24150, "grades": {"A": 24150}, "demand": -35850, "pct": 40.25, "poy": "FP81384R"}, {"machine": "A23", "batch": "FD2F43A1 like", "spec": "150/48 SDR3", "date_range": "4/21-5/31", "days": 30, "td": 1.2, "target": 36000.0, "stored": 0, "grades": {}, "demand": -36000.0, "pct": 0.0, "poy": "FP82167R(L48"}, {"machine": "J07", "batch": "FD2F6FU2K", "spec": "150/48/2 SDR2", "date_range": "2/23-5/31", "days": 30, "td": 3.5, "target": 105000.0, "stored": 25278, "grades": {"A": 25278}, "demand": -79722.0, "pct": 24.074285714285715, "poy": "FP82155R(55B>82168R"}, {"machine": "T01", "batch": "FD2F6GU2K", "spec": "150/48/2 SDr退稅", "date_range": "4/9-5/31", "days": 30, "td": 5, "target": 150000, "stored": 66495, "grades": {"A": 66495}, "demand": -83505, "pct": 44.330000000000005, "poy": "FP82170R(L56"}, {"machine": "T02", "batch": "FD2F6GV2K", "spec": "150/48/2 SDR2", "date_range": "4/15-5/31", "days": 30, "td": 5, "target": 150000, "stored": 38280, "grades": {"A": 38280}, "demand": -111720, "pct": 25.52, "poy": "FP82168R(55B"}, {"machine": "T03", "batch": "FD2F6GS1", "spec": "150/48/2 SDR", "date_range": "4/8-5/31", "days": 30, "td": 2.5, "target": 75000.0, "stored": 25650, "grades": {"A": 25650}, "demand": -49350.0, "pct": 34.2, "poy": "FP82166R>82167R"}, {"machine": "T03", "batch": "FD2F6GR2", "spec": "150/48/2 SDR", "date_range": "4/8-5/31", "days": 30, "td": 2.5, "target": 75000.0, "stored": 21900, "grades": {"A": 21900}, "demand": -53100.0, "pct": 29.2, "poy": "FP82166R>82167R"}, {"machine": "T04", "batch": "FD2F43C2", "spec": "75/72/2 SDR", "date_range": "4/7-5/31", "days": 30, "td": 1.4, "target": 42000.0, "stored": 11850, "grades": {"A": 11850}, "demand": -30150.0, "pct": 28.214285714285715, "poy": "FP11915R"}, {"machine": "T04", "batch": "FD2F43C2 ", "spec": "75/72/2 SDR", "date_range": "4/15-5/31", "days": 30, "td": 1.4, "target": 42000.0, "stored": 11850, "grades": {"A": 11850}, "demand": -30150.0, "pct": 28.214285714285715, "poy": "FP11915R"}, {"machine": "T05", "batch": "FD2F6GT2K like", "spec": "150/48/2 SDr", "date_range": "5/4-5/31", "days": 26, "td": 2.5, "target": 65000.0, "stored": 0, "grades": {}, "demand": -65000.0, "pct": 0.0, "poy": "FP82xxxR"}, {"machine": "T05", "batch": "FD2F7D93K", "spec": "225/72/2 SDr退稅", "date_range": "4/15-5/3X", "days": 3, "td": 3.2, "target": 9600.000000000002, "stored": 8580, "grades": {"A": 8580}, "demand": -1020.0000000000018, "pct": 89.37499999999999, "poy": "FP83023R"}, {"machine": "T05", "batch": "FD2F6GT2K like", "spec": "150/48/2 SDr", "date_range": "5/4-5/31", "days": 26, "td": 2.5, "target": 65000.0, "stored": 0, "grades": {}, "demand": -65000.0, "pct": 0.0, "poy": "FP82xxxR"}, {"machine": "T06", "batch": "FD2F6GT2K", "spec": "150/48/2 SDr", "date_range": "4/12-5/31", "days": 30, "td": 5, "target": 150000, "stored": 43725, "grades": {"A": 43725}, "demand": -106275, "pct": 29.15, "poy": "FP82170R(L56"}];
+        const tableBody = document.getElementById('tableBody');
+        const searchInput = document.getElementById('searchInput');
+        const engineerSpecs = {
+            wu: ["A10", "A11", "A12", "A16", "A17", "A18", "A22", "A23", "A24", "T01", "T02", "T03", "J08"],
+            lo: ["A7", "A8", "A9", "A13", "A14", "A15", "A19", "A20", "A21", "T04", "T05", "T06", "J07"]
+        };
+        let currentEngineer = 'all';
+
+        function setEngineer(eng, btn) {
+            currentEngineer = eng;
+            document.querySelectorAll('.btn').forEach(b => { b.classList.remove('btn-primary', 'active'); b.classList.add('btn-default'); });
+            btn.classList.remove('btn-default'); btn.classList.add('btn-primary', 'active');
+            renderTable(searchInput.value);
+        }
+
+        function renderTable(filter = '') {
+            tableBody.innerHTML = '';
+            let filtered = rawData;
+            if (currentEngineer !== 'all') {
+                const machines = engineerSpecs[currentEngineer];
+                filtered = filtered.filter(item => {
+                    const m = String(item.machine).toUpperCase().trim();
+                    return machines.some(target => {
+                        const targetUpper = target.toUpperCase();
+                        if (m === targetUpper) return true;
+                        const mNum = m.match(/[0-9]+/);
+                        const tNum = targetUpper.match(/[0-9]+/);
+                        if (mNum && tNum && m[0] === targetUpper[0]) { return parseInt(mNum[0]) === parseInt(tNum[0]); }
+                        return false;
+                    });
+                });
+            }
+            filtered = filtered.filter(item => {
+                const searchStr = `${item.machine} ${item.batch} ${item.spec}`.toLowerCase();
+                return searchStr.includes(filter.toLowerCase());
+            });
+            filtered.forEach(item => {
+                const progress = item.pct;
+                const demand = item.demand;
+                const grades = item.grades;
+                const statusClass = demand >= 0 ? 'status-positive' : 'status-negative';
+                const displayDemand = demand >= 0 ? `+${Math.round(demand).toLocaleString()}` : Math.round(demand).toLocaleString();
+                
+                let gradeHtml = `<b>${Math.round(item.stored).toLocaleString()}</b><br>`;
+                Object.keys(grades).forEach(g => { gradeHtml += `<span class="grade-tag grade-${g}">${g}:${Math.round(grades[g]).toLocaleString()}</span>`; });
+                
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td data-label="機台"><span class="badge machine-tag">${item.machine}</span></td>
+                    <td data-label="批號"><b>${item.batch}</b></td>
+                    <td data-label="規格"><small>${item.spec}</small></td>
+                    <td data-label="排產日期"><small>${item.date_range}</small></td>
+                    <td data-label="天數">${item.days}</td>
+                    <td data-label="T/D">${item.td}</td>
+                    <td data-label="排產總量">${Math.round(item.target).toLocaleString()}</td>
+                    <td data-label="已繳庫">${gradeHtml}</td>
+                    <td data-label="生產進度"><div class="progress-bar-container"><div class="progress-inner" style="width: ${progress}%"></div></div><span style="font-size: 11px">${progress.toFixed(0)}%</span></td>
+                    <td data-label="需求量" class="${statusClass}">${displayDemand}</td>
+                    <td data-label="POY批號"><small>${item.poy}</small></td>
+                `;
+                tableBody.appendChild(row);
+            });
+        }
+        searchInput.addEventListener('input', (e) => renderTable(e.target.value));
+        renderTable();
+    </script>
+</body>
+</html>
