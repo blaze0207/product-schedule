@@ -31,6 +31,12 @@ def clean_data():
     df_may = xl.parse(xl.sheet_names[0], header=0)
     df_stock = xl.parse(xl.sheet_names[1], header=None)
     
+    # 抓取 L1 儲存格文字前 10 碼作為繳庫更新日期
+    try:
+        stock_update_date = str(df_stock.iloc[0, 11]).strip()[:10]
+    except:
+        stock_update_date = "未知"
+    
     # 建立庫存對照表 (Key 是簡化後的批號，例如 A042, A0428, A042C)
     stock_map = {}
     valid_grades = ['A', 'AX', 'B', 'C']
@@ -157,6 +163,7 @@ def clean_data():
     return {
         'data': output_data,
         'total_target_ton': total_target_ton,
+        'stock_update_date': stock_update_date,
         'update_time': datetime.now().strftime('%H:%M:%S'),
         'file_name': os.path.basename(excel_file),
         'file_time': mtime
@@ -213,6 +220,7 @@ def generate_html(res):
     
     <div class="info-bar">
         📄 檔案: {res['file_name']} ({res['file_time']})<br>
+        📅 繳庫更新到: {res['stock_update_date']}<br>
         🕒 網頁更新: {res['update_time']}
     </div>
 
