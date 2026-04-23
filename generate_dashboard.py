@@ -1,15 +1,22 @@
-﻿import pandas as pd
+import pandas as pd
 import os
 import json
 import glob
 from datetime import datetime
 
-# 固定工作目錄
-os.chdir(r'C:\product_schedule_test')
+# 使用相對路徑
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+os.chdir(BASE_DIR)
 
 def simplify_id(val):
+    if pd.isna(val): return ""
     s = str(val).strip().upper()
-    if s.startswith("FD2F"): s = s[4:]
+    # 移除 FD 開頭的 4 碼前綴
+    if s.startswith("FD") and len(s) > 4:
+        s = s[4:]
+    # 移除字尾 K (通常 K 不影響主要等級判定)
+    if s.endswith("K"):
+        s = s[:-1]
     return s
 
 def clean_data():
@@ -24,20 +31,35 @@ def clean_data():
     df_may = xl.parse(xl.sheet_names[0], header=0)
     df_stock = xl.parse(xl.sheet_names[1], header=None)
     
+    # 建立庫存對照表 (Key 是簡化後的批號，例如 A042, A0428, A042C)
     stock_map = {}
     valid_grades = ['A', 'AX', 'B', 'C']
     for _, row in df_stock.iterrows():
-        bid = simplify_id(row[1])
+        raw_bid_val = str(row[1]).strip().upper()
+        if not raw_bid_val or raw_bid_val == "NAN": continue
+        
+        bid_key = simplify_id(raw_bid_val)
+        
+        # 判定等級
         grade = str(row[3]).strip().upper()
+        # 若字尾有 8 或 C，強制修正等級 (確保跨表一致性)
+        if raw_bid_val.endswith("8"): grade = "B"
+        elif raw_bid_val.endswith("C"): grade = "C"
+        
         qty = pd.to_numeric(row[11], errors='coerce')
-        if pd.isna(qty) or qty == 0: continue
-        if bid not in stock_map:
-            stock_map[bid] = {'total': 0, 'grades': {g: 0 for g in valid_grades}, 'Other': 0}
-        stock_map[bid]['total'] += qty
-        if grade in valid_grades: stock_map[bid]['grades'][grade] += qty
-        else: stock_map[bid]['Other'] += qty
+        if pd.isna(qty) or qty <= 0: continue
+        
+        if bid_key not in stock_map:
+            stock_map[bid_key] = {'total': 0, 'grades': {g: 0 for g in valid_grades}, 'Other': 0}
+        
+        stock_map[bid_key]['total'] += qty
+        if grade in valid_grades:
+            stock_map[bid_key]['grades'][grade] += qty
+        else:
+            stock_map[bid_key]['Other'] += qty
 
-    cols = ['machine', 'batch_no', 'desc', 'mark', 'dty_spec', 'date_range', 'scheduled_days', 't_d', 'poy_batch', 'poy_spec']
+    # May 表欄位對應
+    cols = ['machine', 'batch_no', 'note', 'mark', 'dty_spec', 'date_range', 'scheduled_days', 't_d', 'poy_batch', 'poy_spec']
     df_may = df_may.iloc[:, :len(cols)]
     df_may.columns = cols
     df_may['machine'] = df_may['machine'].ffill()
@@ -48,7 +70,7 @@ def clean_data():
         m_name = str(row['machine']).strip()
         m_name_upper = m_name.upper()
         if m_name_upper in ['V', 'S2'] or 'S2' in m_name_upper: continue
-        if '庫存不排產' in m_name or '待排產' in m_name or 'M4 (CW)' in m_name_upper or m_name == '機台': continue
+        if any(x in m_name for x in ['庫存不排產', '待排產']) or 'M4 (CW)' in m_name_upper or m_name == '機台': continue
         
         raw_days = row['scheduled_days']
         if pd.isna(raw_days): continue
@@ -57,17 +79,55 @@ def clean_data():
         
         td = pd.to_numeric(row['t_d'], errors='coerce') or 0
         target_kg = days * td * 1000
-        bid = simplify_id(row['batch_no'])
         
-        s_data = stock_map.get(bid, {'total': 0, 'grades': {}})
-        stored = s_data['total']
-        grades = {g: q for g, q in s_data.get('grades', {}).items() if q > 0}
-        if s_data.get('Other', 0) > 0: grades['Other'] = s_data['Other']
+        # --- 批號匹配邏輯優化 ---
+        orig_batch = str(row['batch_no']).strip().upper()
+        is_like = orig_batch.endswith("LIKE")
         
-        demand = stored - target_kg
-        pct = min(100, (stored / target_kg * 100)) if target_kg > 0 else 0
+        # 最終呈現與計算用的容器
+        final_stored = 0
+        final_grades = {g: 0 for g in valid_grades + ['Other']}
         
-        # 處理日期範圍文字 (若為 datetime 則轉為字串)
+        if is_like:
+            # 若為 LIKE 結尾，採精確匹配
+            bid = simplify_id(orig_batch)
+            s_data = stock_map.get(bid, {'total': 0, 'grades': {}, 'Other': 0})
+            final_stored = s_data['total']
+            for g, q in s_data.get('grades', {}).items(): final_grades[g] += q
+            final_grades['Other'] += s_data.get('Other', 0)
+        else:
+            # 1. 移除 FD 前綴後，取前 4 碼當作比對的母批號
+            p = orig_batch
+            if p.startswith("FD") and len(p) > 4: p = p[4:]
+            base = p[:4]
+            
+            # 2. 抓取母批號 (A, AX, Other)
+            data_base = stock_map.get(base, {'total': 0, 'grades': {}, 'Other': 0})
+            final_grades['A'] += data_base['grades'].get('A', 0)
+            final_grades['AX'] += data_base['grades'].get('AX', 0)
+            final_grades['Other'] += data_base.get('Other', 0)
+            
+            # 3. 抓取 B 級 (母批號移除最後一碼 + 8)
+            base_b = base[:-1] + "8" if len(base) > 0 else "8"
+            data_b = stock_map.get(base_b, {'total': 0, 'grades': {}, 'Other': 0})
+            final_grades['B'] += data_b['total']
+            
+            # 4. 抓取 C 級 (母批號 + C)
+            data_c = stock_map.get(base + "C", {'total': 0, 'grades': {}, 'Other': 0})
+            final_grades['C'] += data_c['total']
+            
+            final_stored = sum(final_grades.values())
+
+        # 清除為 0 的等級以便前端顯示
+        display_grades = {g: q for g, q in final_grades.items() if q > 0}
+        # ------------------------
+        
+        # 進度計算排除 B/C 級：((總量 - B級 - C級) / 排產總量)
+        stored_exclude_bc = final_stored - final_grades.get('B', 0) - final_grades.get('C', 0)
+        pct = min(100, (stored_exclude_bc / target_kg * 100)) if target_kg > 0 else 0
+        
+        demand = stored_exclude_bc - target_kg
+        
         dr = row['date_range']
         if isinstance(dr, datetime):
             dr = dr.strftime('%m/%d')
@@ -76,21 +136,27 @@ def clean_data():
 
         output_data.append({
             'machine': m_name,
-            'batch': str(row['batch_no']),
+            'batch': orig_batch,
+            'note': str(row['note']) if not pd.isna(row['note']) else "",
             'spec': str(row['dty_spec']),
-            'date_range': dr, # 新增日期欄位
+            'date_range': dr,
             'days': days,
             'td': td,
             'target': target_kg,
-            'stored': stored,
-            'grades': grades,
+            'stored': final_stored,
+            'grades': display_grades,
             'demand': demand,
             'pct': pct,
-            'poy': str(row['poy_batch'])
+            'poy': str(row['poy_batch']),
+            'poy_spec': str(row['poy_spec'])
         })
+
+    # 計算排產總量 (噸)
+    total_target_ton = sum(item['target'] for item in output_data) / 1000
 
     return {
         'data': output_data,
+        'total_target_ton': total_target_ton,
         'update_time': datetime.now().strftime('%H:%M:%S'),
         'file_name': os.path.basename(excel_file),
         'file_time': mtime
@@ -98,7 +164,7 @@ def clean_data():
 
 def generate_html(res):
     json_data = json.dumps(res['data'], ensure_ascii=False)
-    output_html = os.path.join(r'C:\product_schedule_test', 'production_dashboard.html')
+    output_html = os.path.join(BASE_DIR, 'production_dashboard.html')
     html = f"""
 <!DOCTYPE html>
 <html lang="zh-TW">
@@ -110,7 +176,8 @@ def generate_html(res):
         :root {{ --primary: #2563eb; --bg: #f8fafc; --text: #1e293b; }}
         body {{ font-family: "Microsoft JhengHei", sans-serif; background: var(--bg); color: var(--text); margin: 0; padding: 10px; }}
         .header {{ display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; flex-wrap: wrap; gap: 10px; }}
-        h1 {{ font-size: 1.5rem; margin: 0; }}
+        h1 {{ font-size: 1.5rem; margin: 0; display: flex; align-items: center; flex-wrap: wrap; gap: 10px; }}
+        .total-badge {{ color: #ef4444; font-weight: 900; background: #fee2e2; padding: 4px 12px; border-radius: 20px; border: 2px solid #ef4444; font-size: 1.1rem; }}
         .info-bar {{ font-size: 11px; color: #64748b; margin-bottom: 15px; background: #fff; padding: 10px; border-radius: 6px; border: 1px solid #e2e8f0; line-height: 1.6; border-left: 4px solid #2563eb; }}
         .search-box {{ padding: 12px; width: 100%; max-width: 300px; border: 1px solid #ddd; border-radius: 8px; font-size: 16px; box-sizing: border-box; }}
         .filter-group {{ margin-bottom: 15px; display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }}
@@ -140,7 +207,7 @@ def generate_html(res):
 </head>
 <body>
     <div class="header">
-        <h1>5月產銷表</h1>
+        <h1>5月產銷表 <span class="total-badge">排產總量: {res['total_target_ton']:,.1f} T</span></h1>
         <input type="text" id="searchInput" class="search-box" placeholder="搜尋機台、批號或規格...">
     </div>
     
@@ -160,7 +227,7 @@ def generate_html(res):
         <table id="dataTable">
             <thead>
                 <tr>
-                    <th>機台</th><th>批號</th><th>規格</th><th>排產日期</th><th>天數</th><th>T/D</th><th>排產總量 (KG)</th><th>已繳庫 (KG)</th><th>進度</th><th>需求量 (KG)</th><th>POY批號</th>
+                    <th>機台</th><th>批號</th><th>備註</th><th>規格</th><th>排產日期</th><th>天數</th><th>T/D</th><th>排產總量 (KG)</th><th>已繳庫 (KG)</th><th>進度(不含B/C級)</th><th>需求量 (KG)</th><th>POY批號</th><th>POY規格</th>
                 </tr>
             </thead>
             <tbody id="tableBody"></tbody>
@@ -202,7 +269,7 @@ def generate_html(res):
                 }});
             }}
             filtered = filtered.filter(item => {{
-                const searchStr = `${{item.machine}} ${{item.batch}} ${{item.spec}}`.toLowerCase();
+                const searchStr = `${{item.machine}} ${{item.batch}} ${{item.note}} ${{item.spec}} ${{item.poy}} ${{item.poy_spec}}`.toLowerCase();
                 return searchStr.includes(filter.toLowerCase());
             }});
             filtered.forEach(item => {{
@@ -213,21 +280,25 @@ def generate_html(res):
                 const displayDemand = demand >= 0 ? `+${{Math.round(demand).toLocaleString()}}` : Math.round(demand).toLocaleString();
                 
                 let gradeHtml = `<b>${{Math.round(item.stored).toLocaleString()}}</b><br>`;
-                Object.keys(grades).forEach(g => {{ gradeHtml += `<span class="grade-tag grade-${{g}}">${{g}}:${{Math.round(grades[g]).toLocaleString()}}</span>`; }});
+                Object.keys(grades).forEach(g => {{ 
+                    gradeHtml += `<span class="grade-tag grade-${{g}}">${{g}}:${{Math.round(grades[g]).toLocaleString()}}</span>`; 
+                }});
                 
                 const row = document.createElement('tr');
                 row.innerHTML = `
                     <td data-label="機台"><span class="badge machine-tag">${{item.machine}}</span></td>
                     <td data-label="批號"><b>${{item.batch}}</b></td>
+                    <td data-label="備註"><small>${{item.note}}</small></td>
                     <td data-label="規格"><small>${{item.spec}}</small></td>
                     <td data-label="排產日期"><small>${{item.date_range}}</small></td>
                     <td data-label="天數">${{item.days}}</td>
                     <td data-label="T/D">${{item.td}}</td>
                     <td data-label="排產總量">${{Math.round(item.target).toLocaleString()}}</td>
                     <td data-label="已繳庫">${{gradeHtml}}</td>
-                    <td data-label="生產進度"><div class="progress-bar-container"><div class="progress-inner" style="width: ${{progress}}%"></div></div><span style="font-size: 11px">${{progress.toFixed(0)}}%</span></td>
+                    <td data-label="進度(不含B/C級)"><div class="progress-bar-container"><div class="progress-inner" style="width: ${{progress}}%"></div></div><span style="font-size: 11px">${{progress.toFixed(0)}}%</span></td>
                     <td data-label="需求量" class="${{statusClass}}">${{displayDemand}}</td>
                     <td data-label="POY批號"><small>${{item.poy}}</small></td>
+                    <td data-label="POY規格"><small>${{item.poy_spec}}</small></td>
                 `;
                 tableBody.appendChild(row);
             }});
