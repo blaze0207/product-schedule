@@ -85,7 +85,7 @@
         <div class="ab-item">🔍 檢修 <span class="ab-count">0</span></div>
     </div>
     <div class="info-bar">
-        <div>📄 計畫: DTYMay26產銷260416-1450+300+30.xlsx | 📅 繳庫: 2026/04/23 | 🕒 網頁同步: 15:24:41</div>
+        <div>📄 計畫: DTYMay26產銷260416-1450+300+30.xlsx | 📅 繳庫: 2026/04/23 | 🕒 網頁同步: 15:30:29</div>
     </div>
     <div class="filter-group">
         <button class="btn active" onclick="setEngineer('all', this)">全部機台</button>
@@ -137,17 +137,19 @@
                 tableBody.appendChild(row);
             });
         }
-        function updatePoySummary(poyBatch, activeRows) {
-            const filteredByBatch = activeRows.filter(r => r.poy.toUpperCase() === poyBatch);
-            if (filteredByBatch.length === 0) { poySummaryPanel.style.display = 'none'; return; }
-            const machines = new Set(filteredByBatch.map(r => r.machine.split(' ')[0]));
-            const totalDailyDemand = filteredByBatch.reduce((sum, r) => sum + (r.td_actual * 1000), 0);
-            const poyStock = filteredByBatch[0].poy_qty;
-            const daysLeft = totalDailyDemand > 0 ? (poyStock / totalDailyDemand) : 999;
-            document.getElementById('poySummaryTitle').innerText = `POY 批號彙總: ${poyBatch}`;
+        function updatePoySummary(poyInput, activeRows) {
+            if (activeRows.length === 0) { poySummaryPanel.style.display = 'none'; return; }
+            const batchStockMap = {};
+            activeRows.forEach(r => { if (r.poy && r.poy !== "nan") batchStockMap[r.poy] = r.poy_qty; });
+            const uniqueBatches = Object.keys(batchStockMap);
+            const totalStock = Object.values(batchStockMap).reduce((a, b) => a + b, 0);
+            const totalDailyDemand = activeRows.reduce((sum, r) => sum + (r.td_actual * 1000), 0);
+            const daysLeft = totalDailyDemand > 0 ? (totalStock / totalDailyDemand) : 999;
+            const machines = new Set(activeRows.map(r => String(r.machine).split(' ')[0]));
+            document.getElementById('poySummaryTitle').innerText = `POY 彙總 (符合 "${poyInput}"): ${uniqueBatches.join(', ')}`;
             document.getElementById('poyMachineCount').innerText = machines.size + " 台";
             document.getElementById('poyTotalDailyDemand').innerText = Math.round(totalDailyDemand).toLocaleString() + " KG/日";
-            document.getElementById('poyTotalStock').innerText = Math.round(poyStock).toLocaleString() + " KG";
+            document.getElementById('poyTotalStock').innerText = Math.round(totalStock).toLocaleString() + " KG";
             document.getElementById('poyTotalDaysLeft').innerText = (daysLeft > 99 ? "---" : daysLeft.toFixed(1) + " 天");
             poySummaryPanel.style.display = 'block';
         }
