@@ -4,71 +4,90 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>5月產銷表</title>
+    <title>5月產銷戰情室</title>
     <style>
-        :root { --primary: #2563eb; --bg: #f8fafc; --text: #1e293b; }
+        :root { --primary: #2563eb; --bg: #f1f5f9; --text: #0f172a; --card: #ffffff; }
         body { font-family: "Microsoft JhengHei", sans-serif; background: var(--bg); color: var(--text); margin: 0; padding: 10px; }
-        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; flex-wrap: wrap; gap: 10px; }
-        h1 { font-size: 1.5rem; margin: 0; display: flex; align-items: center; flex-wrap: wrap; gap: 10px; }
-        .total-badge { color: #ef4444; font-weight: 900; background: #fee2e2; padding: 4px 12px; border-radius: 20px; border: 2px solid #ef4444; font-size: 1.1rem; }
-        .info-bar { font-size: 11px; color: #64748b; margin-bottom: 15px; background: #fff; padding: 10px; border-radius: 6px; border: 1px solid #e2e8f0; line-height: 1.6; border-left: 4px solid #2563eb; }
-        .search-box { padding: 12px; width: 100%; max-width: 300px; border: 1px solid #ddd; border-radius: 8px; font-size: 16px; box-sizing: border-box; }
+        .header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 15px; flex-wrap: wrap; gap: 10px; }
+        h1 { font-size: 1.6rem; margin: 0; display: flex; align-items: center; gap: 10px; color: #1e3a8a; }
+        .summary-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; margin-bottom: 20px; }
+        .summary-card { background: var(--card); padding: 15px; border-radius: 12px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); border-left: 5px solid #2563eb; }
+        .summary-card.red { border-left-color: #ef4444; }
+        .summary-card.green { border-left-color: #22c55e; }
+        .summary-label { font-size: 12px; color: #64748b; font-weight: bold; margin-bottom: 5px; }
+        .summary-value { font-size: 1.4rem; font-weight: 900; color: #1e293b; }
+        .summary-unit { font-size: 12px; color: #94a3b8; margin-left: 4px; }
+        .info-bar { font-size: 11px; color: #64748b; margin-bottom: 15px; background: #fff; padding: 10px; border-radius: 8px; border: 1px solid #e2e8f0; display: flex; justify-content: space-between; flex-wrap: wrap; gap: 10px; }
+        .search-box { padding: 12px; width: 100%; max-width: 320px; border: 2px solid #e2e8f0; border-radius: 10px; font-size: 16px; outline: none; transition: 0.2s; }
+        .search-box:focus { border-color: #2563eb; box-shadow: 0 0 0 3px rgba(37,99,235,0.1); }
         .filter-group { margin-bottom: 15px; display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
-        .btn { padding: 10px 16px; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; transition: 0.2s; font-size: 14px; }
-        .btn-default { background: #e2e8f0; color: #475569; }
-        .btn-primary { background: #2563eb; color: white; }
+        .btn { padding: 8px 16px; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; transition: 0.2s; font-size: 13px; background: #e2e8f0; color: #475569; }
+        .btn.active { background: #2563eb; color: white; }
         .card { background: white; border-radius: 12px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); padding: 10px; overflow-x: auto; }
-        table { width: 100%; border-collapse: collapse; }
-        th { background: #f1f5f9; padding: 12px; text-align: left; border-bottom: 2px solid #e2e8f0; font-size: 13px; color: #64748b; }
+        table { width: 100%; border-collapse: collapse; min-width: 1000px; }
+        th { background: #f8fafc; padding: 12px; text-align: left; border-bottom: 2px solid #e2e8f0; font-size: 12px; color: #64748b; text-transform: uppercase; }
         td { padding: 12px; border-bottom: 1px solid #f1f5f9; font-size: 14px; vertical-align: top; }
         .badge { padding: 4px 8px; border-radius: 6px; font-size: 12px; font-weight: bold; }
-        .machine-tag { background: #dbeafe; color: #1e40af; }
-        .grade-tag { display: inline-block; padding: 2px 6px; border-radius: 4px; font-size: 11px; margin-right: 4px; margin-bottom: 4px; color: white; }
-        .grade-A { background: #22c55e; } .grade-AX { background: #3b82f6; } .grade-B { background: #f59e0b; } .grade-C { background: #64748b; } .grade-Other { background: #94a3b8; }
-        .progress-bar-container { width: 100%; max-width: 80px; height: 8px; background: #e2e8f0; border-radius: 4px; display: inline-block; overflow: hidden; vertical-align: middle; }
-        .progress-inner { height: 100%; background: #22c55e; }
-        .status-negative { color: #ef4444; font-weight: bold; }
-        .status-positive { color: #22c55e; font-weight: bold; }
-        
-        /* 狀態燈號樣式 */
-        .status-dot { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 5px; }
+        .machine-tag { background: #eff6ff; color: #1e40af; border: 1px solid #bfdbfe; }
+        .status-dot { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 6px; }
         .dot-ok { background: #22c55e; box-shadow: 0 0 8px #22c55e; }
         .dot-diff { background: #f59e0b; box-shadow: 0 0 8px #f59e0b; }
         .dot-none { background: #cbd5e1; }
-        .actual-box { font-size: 11px; color: #64748b; margin-top: 4px; border-top: 1px dashed #e2e8f0; padding-top: 4px; }
-        
+        .forecast-tag { background: #fff7ed; color: #c2410c; font-size: 10px; padding: 2px 6px; border-radius: 4px; border: 1px solid #fdba74; display: inline-block; margin-top: 4px; font-weight: bold; }
+        .td-box { font-size: 12px; line-height: 1.4; }
+        .td-up { color: #22c55e; } .td-down { color: #ef4444; }
+        .progress-bar-container { width: 100%; max-width: 80px; height: 8px; background: #e2e8f0; border-radius: 4px; display: inline-block; overflow: hidden; vertical-align: middle; }
+        .progress-inner { height: 100%; background: #22c55e; }
         @media screen and (max-width: 768px) {
             thead { display: none; }
+            table { min-width: 100%; }
             tr { display: block; margin-bottom: 15px; border: 1px solid #e2e8f0; border-radius: 12px; padding: 10px; background: #fff; }
-            td { display: block; border: none; border-bottom: 1px solid #f1f5f9; position: relative; padding-left: 40%; text-align: right; min-height: 24px; }
-            td:last-child { border-bottom: none; }
-            td::before { content: attr(data-label); position: absolute; left: 10px; width: 35%; text-align: left; font-weight: bold; color: #64748b; font-size: 13px; }
+            td { display: block; border: none; border-bottom: 1px solid #f1f5f9; position: relative; padding-left: 45%; text-align: right; min-height: 28px; }
+            td::before { content: attr(data-label); position: absolute; left: 10px; width: 40%; text-align: left; font-weight: bold; color: #64748b; font-size: 12px; }
         }
     </style>
 </head>
 <body>
     <div class="header">
-        <h1>5月產銷表 <span class="total-badge">排產總量: 1,459.6 T</span></h1>
-        <input type="text" id="searchInput" class="search-box" placeholder="搜尋機台、批號或規格...">
+        <h1>🚀 5月產銷戰情室</h1>
+        <input type="text" id="searchInput" class="search-box" placeholder="搜尋機台、批號、規格...">
+    </div>
+
+    <div class="summary-grid">
+        <div class="summary-card red">
+            <div class="summary-label">排產總目標</div>
+            <div class="summary-value">1,459.6<span class="summary-unit">T</span></div>
+        </div>
+        <div class="summary-card green">
+            <div class="summary-label">今日現場產量</div>
+            <div class="summary-value">nan<span class="summary-unit">T</span></div>
+        </div>
+        <div class="summary-card">
+            <div class="summary-label">運行中機台</div>
+            <div class="summary-value">26<span class="summary-unit">台</span></div>
+        </div>
+        <div class="summary-card" style="border-left-color: #8b5cf6;">
+            <div class="summary-label">現場更新日期</div>
+            <div class="summary-value">04/23</div>
+        </div>
     </div>
     
     <div class="info-bar">
-        📄 計畫: DTYMay26產銷260416-1450+300+30.xlsx | 📅 繳庫更新: 2026/04/23<br>
-        🏭 現場: 04/23 更新 | 🕒 網頁同步: 09:51:27
+        <div>📄 計畫: DTYMay26產銷260416-1450+300+30.xlsx | 📅 繳庫: 2026/04/23</div>
+        <div>🕒 網頁同步: 09:57:55</div>
     </div>
 
     <div class="filter-group">
-        <span>工程師:</span>
-        <button class="btn btn-primary active" onclick="setEngineer('all', this)">全部</button>
-        <button class="btn btn-default" onclick="setEngineer('wu', this)">吳</button>
-        <button class="btn btn-default" onclick="setEngineer('lo', this)">羅</button>
+        <button class="btn active" onclick="setEngineer('all', this)">全部機台</button>
+        <button class="btn" onclick="setEngineer('wu', this)">工程師：吳</button>
+        <button class="btn" onclick="setEngineer('lo', this)">工程師：羅</button>
     </div>
 
     <div class="card">
         <table id="dataTable">
             <thead>
                 <tr>
-                    <th>機台</th><th>批號 (計畫/現場)</th><th>備註</th><th>規格</th><th>排產日期</th><th>天數</th><th>T/D</th><th>排產總量 (KG)</th><th>已繳庫 (KG)</th><th>進度(不含B/C級)</th><th>需求量 (KG)</th><th>POY批號</th><th>POY規格</th>
+                    <th>機台</th><th>批號 (計畫/現場)</th><th>生產效率 (T/D)</th><th>規格</th><th>排產日期</th><th>排產量 (KG)</th><th>已繳庫 (KG)</th><th>進度</th><th>需求量</th><th>POY資訊</th>
                 </tr>
             </thead>
             <tbody id="tableBody"></tbody>
@@ -76,7 +95,7 @@
     </div>
 
     <script>
-        const rawData = [{"machine": "A07", "batch": "FD2FA042", "actual_batch": "2FA042", "status": "ok", "note": "AX同時倒筒+R, AL", "spec": "75/72 CE", "date_range": "4/17-5/31", "days": 30, "td": 0.7, "target": 21000.0, "stored": 2973, "grades": {"A": 2400, "AX": 573}, "demand": -18027.0, "pct": 14.157142857142857, "poy": "FP01422", "poy_spec": "125/72 CE"}, {"machine": "A08", "batch": "FD2FA032", "actual_batch": "2FA032", "status": "ok", "note": "JH 20TAW毅", "spec": "75/36 SDR", "date_range": "4/1-5/31", "days": 30, "td": 0.7, "target": 21000.0, "stored": 11828, "grades": {"A": 6840, "AX": 4316, "B": 672}, "demand": -9844.0, "pct": 53.12380952380953, "poy": "FP81386R", "poy_spec": "125/36 SDR"}, {"machine": "A08", "batch": "FD2FA032", "actual_batch": "2FA032", "status": "ok", "note": "JH 20TAW毅", "spec": "75/36 SDR", "date_range": "3/30-5/31", "days": 30, "td": 0.7, "target": 21000.0, "stored": 11828, "grades": {"A": 6840, "AX": 4316, "B": 672}, "demand": -9844.0, "pct": 53.12380952380953, "poy": "FP81386R", "poy_spec": "125/36 SDR"}, {"machine": "A09", "batch": "FD2F42S2K", "actual_batch": "2F42S2", "status": "ok", "note": "A+AX", "spec": "75/24/2 SDR2", "date_range": "3/26-5/31", "days": 30, "td": 0.7, "target": 21000.0, "stored": 26350, "grades": {"A": 23550, "AX": 2103, "B": 697}, "demand": 4653.0, "pct": 100, "poy": "FP81363R", "poy_spec": "125/24 SDR"}, {"machine": "A09", "batch": "FD2F42S2K", "actual_batch": "2F42S2", "status": "ok", "note": "A+AX", "spec": "75/24/2 SDR2", "date_range": "4/1-5/31", "days": 30, "td": 0.7, "target": 21000.0, "stored": 26350, "grades": {"A": 23550, "AX": 2103, "B": 697}, "demand": 4653.0, "pct": 100, "poy": "FP81363R", "poy_spec": "125/24 SDR"}, {"machine": "A11", "batch": "FD2F1YR2", "actual_batch": "2F1YR2", "status": "ok", "note": "AW56.5T+26T AW", "spec": "75/36 HC*", "date_range": "3/2-5/31", "days": 30, "td": 1.2, "target": 36000.0, "stored": 35358, "grades": {"A": 28248, "AX": 6550, "B": 560}, "demand": -1202.0, "pct": 96.66111111111111, "poy": "FP81857R 67T吃空", "poy_spec": "125/36 CDR*"}, {"machine": "A12", "batch": "FD2F42T2K", "actual_batch": "2F42T2", "status": "ok", "note": "A+AX", "spec": "75/24/2 SDR1", "date_range": "3/6-5/31", "days": 30, "td": 1.5, "target": 45000.0, "stored": 52547, "grades": {"A": 46320, "AX": 5573, "B": 654}, "demand": 6893.0, "pct": 100, "poy": "FP81363R", "poy_spec": "125/24 SDR"}, {"machine": "A15", "batch": "FD2F43G2", "actual_batch": "2F43G2", "status": "ok", "note": "AW21T", "spec": "150/48 HC*", "date_range": "4/16-4/28", "days": 12, "td": 2, "target": 24000, "stored": 1500, "grades": {"A": 1500}, "demand": -22500, "pct": 6.25, "poy": "FP82781", "poy_spec": "250/48 HC"}, {"machine": "A15", "batch": "FD2F43D2 LIKE", "actual_batch": "2F43G2", "status": "diff", "note": "2580kg/組", "spec": "150/48 CDR*", "date_range": "4/29-5/31", "days": 30, "td": 2, "target": 60000, "stored": 0, "grades": {}, "demand": -60000, "pct": 0.0, "poy": "FP82781", "poy_spec": "250/48 HC*"}, {"machine": "A18", "batch": "FD2F42M2K", "actual_batch": "2F42M2", "status": "ok", "note": "A+AX", "spec": "75/24/2 SDR2", "date_range": "2/23-5/31", "days": 30, "td": 1.5, "target": 45000.0, "stored": 75698, "grades": {"A": 67380, "AX": 7667, "B": 651}, "demand": 30047.0, "pct": 100, "poy": "FP81364R", "poy_spec": "125/24 SDR"}, {"machine": "A19", "batch": "FD2F43B1", "actual_batch": "2F43J1", "status": "diff", "note": "SET 95/20 Alex", "spec": "150/48 SDr", "date_range": "4/7-5/31", "days": 30, "td": 1.2, "target": 36000.0, "stored": 22142, "grades": {"A": 20700, "AX": 1442}, "demand": -13858.0, "pct": 61.50555555555556, "poy": "FP82166R>82167R", "poy_spec": "255/48 SDR"}, {"machine": "A19", "batch": "FD2F42Y1", "actual_batch": "2F43J1", "status": "diff", "note": "SET 95/20 Alex", "spec": "150/48 SDR", "date_range": "3/30-5/31", "days": 30, "td": 1.2, "target": 36000.0, "stored": 18086, "grades": {"A": 16260, "AX": 1254, "B": 572}, "demand": -18486.0, "pct": 48.65, "poy": "FP82163R>82167R", "poy_spec": "255/48 SDR"}, {"machine": "A20", "batch": "FD2F29C2G", "actual_batch": "停機", "status": "diff", "note": "W:4kg,Wooly(先改)", "spec": "100/72 PFR(Petal", "date_range": "2/23-5/31", "days": 30, "td": 1.6, "target": 48000.0, "stored": 9308, "grades": {"A": 7344, "B": 1964}, "demand": -40656.0, "pct": 15.299999999999999, "poy": "FP81370R>81385R", "poy_spec": "165/72 PFR"}, {"machine": "A21", "batch": "FD2F29I1", "actual_batch": "2F29I1", "status": "ok", "note": "OIA", "spec": "100/36 SDr退稅", "date_range": "4/7-5/31", "days": 30, "td": 2, "target": 60000, "stored": 28527, "grades": {"A": 26400, "AX": 2127}, "demand": -31473, "pct": 47.545, "poy": "FP81384R", "poy_spec": "170/36 SDR"}, {"machine": "A23", "batch": "FD2F43A1 LIKE", "actual_batch": "2F43I1", "status": "diff", "note": "SET 35/10 Alex", "spec": "150/48 SDR3", "date_range": "4/21-5/31", "days": 30, "td": 1.2, "target": 36000.0, "stored": 0, "grades": {}, "demand": -36000.0, "pct": 0.0, "poy": "FP82167R(L48", "poy_spec": "255/48 SDR"}, {"machine": "J07", "batch": "FD2F6FU2K", "actual_batch": "停機", "status": "diff", "note": "YKK/80D外銷", "spec": "150/48/2 SDR2", "date_range": "2/23-5/31", "days": 30, "td": 3.5, "target": 105000.0, "stored": 23472, "grades": {"A": 7623, "AX": 9622, "B": 6227}, "demand": -87755.0, "pct": 16.423809523809524, "poy": "FP82155R(55B>82168R", "poy_spec": "255/48 SDR"}, {"machine": "T01", "batch": "FD2F6GU2K", "actual_batch": "2F6GU2", "status": "ok", "note": "YKK", "spec": "150/48/2 SDr退稅", "date_range": "4/9-5/31", "days": 30, "td": 5, "target": 150000, "stored": 41783, "grades": {"A": 38610, "AX": 1549, "B": 1624}, "demand": -109841, "pct": 26.772666666666666, "poy": "FP82170R(L56", "poy_spec": "255/48 SDR"}, {"machine": "T02", "batch": "FD2F6GV2K", "actual_batch": "2F6GV2", "status": "ok", "note": "YKK", "spec": "150/48/2 SDR2", "date_range": "4/15-5/31", "days": 30, "td": 5, "target": 150000, "stored": 47820, "grades": {"A": 43065, "AX": 3114, "B": 1641}, "demand": -103821, "pct": 30.786, "poy": "FP82168R(55B", "poy_spec": "255/48 SDR"}, {"machine": "T03", "batch": "FD2F6GS1", "actual_batch": "2F6GY2", "status": "diff", "note": "wooly輕噴W:5kg", "spec": "150/48/2 SDR", "date_range": "4/8-5/31", "days": 30, "td": 2.5, "target": 75000.0, "stored": 28342, "grades": {"A": 25830, "AX": 2512}, "demand": -46658.0, "pct": 37.78933333333334, "poy": "FP82166R>82167R", "poy_spec": "255/48 SDR"}, {"machine": "T03", "batch": "FD2F6GR2", "actual_batch": "2F6GY2", "status": "diff", "note": "wooly中噴W:5kg", "spec": "150/48/2 SDR", "date_range": "4/8-5/31", "days": 30, "td": 2.5, "target": 75000.0, "stored": 25236, "grades": {"A": 21900, "AX": 2679, "B": 657}, "demand": -50421.0, "pct": 32.772, "poy": "FP82166R>82167R", "poy_spec": "255/48 SDR"}, {"machine": "T04", "batch": "FD2F43C2", "actual_batch": "2F43C2", "status": "ok", "note": "織染JH", "spec": "75/72/2 SDR", "date_range": "4/7-5/31", "days": 30, "td": 1.4, "target": 42000.0, "stored": 15559, "grades": {"A": 14850, "AX": 709}, "demand": -26441.0, "pct": 37.0452380952381, "poy": "FP11915R", "poy_spec": "120/72 SDR"}, {"machine": "T04", "batch": "FD2F43C2", "actual_batch": "2F43C2", "status": "ok", "note": "織染JH", "spec": "75/72/2 SDR", "date_range": "4/15-5/31", "days": 30, "td": 1.4, "target": 42000.0, "stored": 15559, "grades": {"A": 14850, "AX": 709}, "demand": -26441.0, "pct": 37.0452380952381, "poy": "FP11915R", "poy_spec": "120/72 SDR"}, {"machine": "T05", "batch": "FD2F6GT2K LIKE", "actual_batch": "2F6IA2", "status": "diff", "note": "", "spec": "150/48/2 SDr", "date_range": "5/4-5/31", "days": 26, "td": 2.5, "target": 65000.0, "stored": 0, "grades": {}, "demand": -65000.0, "pct": 0.0, "poy": "FP82xxxR", "poy_spec": "255/48 SDR"}, {"machine": "T05", "batch": "FD2F7D93K", "actual_batch": "2F6IA2", "status": "diff", "note": "YKK小包A+AX", "spec": "225/72/2 SDr退稅", "date_range": "4/15-5/3X", "days": 3, "td": 3.2, "target": 9600.000000000002, "stored": 9385, "grades": {"A": 8580, "AX": 805}, "demand": -215.00000000000182, "pct": 97.76041666666664, "poy": "FP83023R", "poy_spec": "340/72 SDR"}, {"machine": "T05", "batch": "FD2F6GT2K LIKE", "actual_batch": "2F6IA2", "status": "diff", "note": "", "spec": "150/48/2 SDr", "date_range": "5/4-5/31", "days": 26, "td": 2.5, "target": 65000.0, "stored": 0, "grades": {}, "demand": -65000.0, "pct": 0.0, "poy": "FP82xxxR", "poy_spec": "255/48 SDR"}, {"machine": "T06", "batch": "FD2F6GT2K", "actual_batch": "2F6GT2", "status": "ok", "note": "內銷 大包80T AW", "spec": "150/48/2 SDr", "date_range": "4/12-5/31", "days": 30, "td": 5, "target": 150000, "stored": 29584, "grades": {"A": 24915, "AX": 3858, "B": 811}, "demand": -121227, "pct": 19.182, "poy": "FP82170R(L56", "poy_spec": "255/48 SDR"}];
+        const rawData = [{"machine": "A07", "batch": "FD2FA042", "actual_batch": "2FA042", "status": "ok", "td_plan": 0.7, "td_actual": 3.0, "finish_forecast": "", "note": "AX同時倒筒+R, AL", "spec": "75/72 CE", "date_range": "4/17-5/31", "days": 30, "target": 21000.0, "stored": 2973, "grades": {"A": 2400, "AX": 573}, "demand": -18027.0, "pct": 14.157142857142857, "poy": "FP01422", "poy_spec": "125/72 CE"}, {"machine": "A08", "batch": "FD2FA032", "actual_batch": "2FA032", "status": "ok", "td_plan": 0.7, "td_actual": 1.7777777777777777, "finish_forecast": "", "note": "JH 20TAW毅", "spec": "75/36 SDR", "date_range": "4/1-5/31", "days": 30, "target": 21000.0, "stored": 11828, "grades": {"A": 6840, "AX": 4316, "B": 672}, "demand": -9844.0, "pct": 53.12380952380953, "poy": "FP81386R", "poy_spec": "125/36 SDR"}, {"machine": "A08", "batch": "FD2FA032", "actual_batch": "2FA032", "status": "ok", "td_plan": 0.7, "td_actual": 1.7777777777777777, "finish_forecast": "", "note": "JH 20TAW毅", "spec": "75/36 SDR", "date_range": "3/30-5/31", "days": 30, "target": 21000.0, "stored": 11828, "grades": {"A": 6840, "AX": 4316, "B": 672}, "demand": -9844.0, "pct": 53.12380952380953, "poy": "FP81386R", "poy_spec": "125/36 SDR"}, {"machine": "A09", "batch": "FD2F42S2K", "actual_batch": "2F42S2", "status": "ok", "td_plan": 0.7, "td_actual": 3.2653061224489797, "finish_forecast": "", "note": "A+AX", "spec": "75/24/2 SDR2", "date_range": "3/26-5/31", "days": 30, "target": 21000.0, "stored": 26350, "grades": {"A": 23550, "AX": 2103, "B": 697}, "demand": 4653.0, "pct": 100, "poy": "FP81363R", "poy_spec": "125/24 SDR"}, {"machine": "A09", "batch": "FD2F42S2K", "actual_batch": "2F42S2", "status": "ok", "td_plan": 0.7, "td_actual": 3.2653061224489797, "finish_forecast": "", "note": "A+AX", "spec": "75/24/2 SDR2", "date_range": "4/1-5/31", "days": 30, "target": 21000.0, "stored": 26350, "grades": {"A": 23550, "AX": 2103, "B": 697}, "demand": 4653.0, "pct": 100, "poy": "FP81363R", "poy_spec": "125/24 SDR"}, {"machine": "A11", "batch": "FD2F1YR2", "actual_batch": "2F1YR2", "status": "ok", "td_plan": 1.2, "td_actual": 1.7496962332928312, "finish_forecast": "", "note": "AW56.5T+26T AW", "spec": "75/36 HC*", "date_range": "3/2-5/31", "days": 30, "target": 36000.0, "stored": 35358, "grades": {"A": 28248, "AX": 6550, "B": 560}, "demand": -1202.0, "pct": 96.66111111111111, "poy": "FP81857R 67T吃空", "poy_spec": "125/36 CDR*"}, {"machine": "A12", "batch": "FD2F42T2K", "actual_batch": "2F42T2", "status": "ok", "td_plan": 1.5, "td_actual": 3.250564334085779, "finish_forecast": "", "note": "A+AX", "spec": "75/24/2 SDR1", "date_range": "3/6-5/31", "days": 30, "target": 45000.0, "stored": 52547, "grades": {"A": 46320, "AX": 5573, "B": 654}, "demand": 6893.0, "pct": 100, "poy": "FP81363R", "poy_spec": "125/24 SDR"}, {"machine": "A15", "batch": "FD2F43G2", "actual_batch": "2F43G2", "status": "ok", "td_plan": 2, "td_actual": 3.310344827586207, "finish_forecast": "", "note": "AW21T", "spec": "150/48 HC*", "date_range": "4/16-4/28", "days": 12, "target": 24000, "stored": 1500, "grades": {"A": 1500}, "demand": -22500, "pct": 6.25, "poy": "FP82781", "poy_spec": "250/48 HC"}, {"machine": "A15", "batch": "FD2F43D2 LIKE", "actual_batch": "2F43G2", "status": "diff", "td_plan": 2, "td_actual": 3.310344827586207, "finish_forecast": "", "note": "2580kg/組", "spec": "150/48 CDR*", "date_range": "4/29-5/31", "days": 30, "target": 60000, "stored": 0, "grades": {}, "demand": -60000, "pct": 0.0, "poy": "FP82781", "poy_spec": "250/48 HC*"}, {"machine": "A18", "batch": "FD2F42M2K", "actual_batch": "2F42M2", "status": "ok", "td_plan": 1.5, "td_actual": 3.272727272727273, "finish_forecast": "", "note": "A+AX", "spec": "75/24/2 SDR2", "date_range": "2/23-5/31", "days": 30, "target": 45000.0, "stored": 75698, "grades": {"A": 67380, "AX": 7667, "B": 651}, "demand": 30047.0, "pct": 100, "poy": "FP81364R", "poy_spec": "125/24 SDR"}, {"machine": "A19", "batch": "FD2F43B1", "actual_batch": "2F43J1", "status": "diff", "td_plan": 1.2, "td_actual": NaN, "finish_forecast": "", "note": "SET 95/20 Alex", "spec": "150/48 SDr", "date_range": "4/7-5/31", "days": 30, "target": 36000.0, "stored": 22142, "grades": {"A": 20700, "AX": 1442}, "demand": -13858.0, "pct": 61.50555555555556, "poy": "FP82166R>82167R", "poy_spec": "255/48 SDR"}, {"machine": "A19", "batch": "FD2F42Y1", "actual_batch": "2F43J1", "status": "diff", "td_plan": 1.2, "td_actual": NaN, "finish_forecast": "", "note": "SET 95/20 Alex", "spec": "150/48 SDR", "date_range": "3/30-5/31", "days": 30, "target": 36000.0, "stored": 18086, "grades": {"A": 16260, "AX": 1254, "B": 572}, "demand": -18486.0, "pct": 48.65, "poy": "FP82163R>82167R", "poy_spec": "255/48 SDR"}, {"machine": "A20", "batch": "FD2F29C2G", "actual_batch": "停機", "status": "diff", "td_plan": 1.6, "td_actual": NaN, "finish_forecast": "", "note": "W:4kg,Wooly(先改)", "spec": "100/72 PFR(Petal", "date_range": "2/23-5/31", "days": 30, "target": 48000.0, "stored": 9308, "grades": {"A": 7344, "B": 1964}, "demand": -40656.0, "pct": 15.299999999999999, "poy": "FP81370R>81385R", "poy_spec": "165/72 PFR"}, {"machine": "A21", "batch": "FD2F29I1", "actual_batch": "2F29I1", "status": "ok", "td_plan": 2, "td_actual": 2.2187981510015407, "finish_forecast": "", "note": "OIA", "spec": "100/36 SDr退稅", "date_range": "4/7-5/31", "days": 30, "target": 60000, "stored": 28527, "grades": {"A": 26400, "AX": 2127}, "demand": -31473, "pct": 47.545, "poy": "FP81384R", "poy_spec": "170/36 SDR"}, {"machine": "A23", "batch": "FD2F43A1 LIKE", "actual_batch": "2F43I1", "status": "diff", "td_plan": 1.2, "td_actual": 3.01255230125523, "finish_forecast": "", "note": "SET 35/10 Alex", "spec": "150/48 SDR3", "date_range": "4/21-5/31", "days": 30, "target": 36000.0, "stored": 0, "grades": {}, "demand": -36000.0, "pct": 0.0, "poy": "FP82167R(L48", "poy_spec": "255/48 SDR"}, {"machine": "J07", "batch": "FD2F6FU2K", "actual_batch": "停機", "status": "diff", "td_plan": 3.5, "td_actual": NaN, "finish_forecast": "", "note": "YKK/80D外銷", "spec": "150/48/2 SDR2", "date_range": "2/23-5/31", "days": 30, "target": 105000.0, "stored": 23472, "grades": {"A": 7623, "AX": 9622, "B": 6227}, "demand": -87755.0, "pct": 16.423809523809524, "poy": "FP82155R(55B>82168R", "poy_spec": "255/48 SDR"}, {"machine": "T01", "batch": "FD2F6GU2K", "actual_batch": "2F6GU2", "status": "ok", "td_plan": 5, "td_actual": 5.901639344262295, "finish_forecast": "", "note": "YKK", "spec": "150/48/2 SDr退稅", "date_range": "4/9-5/31", "days": 30, "target": 150000, "stored": 41783, "grades": {"A": 38610, "AX": 1549, "B": 1624}, "demand": -109841, "pct": 26.772666666666666, "poy": "FP82170R(L56", "poy_spec": "255/48 SDR"}, {"machine": "T02", "batch": "FD2F6GV2K", "actual_batch": "2F6GV2", "status": "ok", "td_plan": 5, "td_actual": 5.82995951417004, "finish_forecast": "", "note": "YKK", "spec": "150/48/2 SDR2", "date_range": "4/15-5/31", "days": 30, "target": 150000, "stored": 47820, "grades": {"A": 43065, "AX": 3114, "B": 1641}, "demand": -103821, "pct": 30.786, "poy": "FP82168R(55B", "poy_spec": "255/48 SDR"}, {"machine": "T03", "batch": "FD2F6GS1", "actual_batch": "2F6GY2", "status": "diff", "td_plan": 2.5, "td_actual": 6.0, "finish_forecast": "", "note": "wooly輕噴W:5kg", "spec": "150/48/2 SDR", "date_range": "4/8-5/31", "days": 30, "target": 75000.0, "stored": 28342, "grades": {"A": 25830, "AX": 2512}, "demand": -46658.0, "pct": 37.78933333333334, "poy": "FP82166R>82167R", "poy_spec": "255/48 SDR"}, {"machine": "T03", "batch": "FD2F6GR2", "actual_batch": "2F6GY2", "status": "diff", "td_plan": 2.5, "td_actual": 6.0, "finish_forecast": "", "note": "wooly中噴W:5kg", "spec": "150/48/2 SDR", "date_range": "4/8-5/31", "days": 30, "target": 75000.0, "stored": 25236, "grades": {"A": 21900, "AX": 2679, "B": 657}, "demand": -50421.0, "pct": 32.772, "poy": "FP82166R>82167R", "poy_spec": "255/48 SDR"}, {"machine": "T04", "batch": "FD2F43C2", "actual_batch": "2F43C2", "status": "ok", "td_plan": 1.4, "td_actual": 2.8125, "finish_forecast": "", "note": "織染JH", "spec": "75/72/2 SDR", "date_range": "4/7-5/31", "days": 30, "target": 42000.0, "stored": 15559, "grades": {"A": 14850, "AX": 709}, "demand": -26441.0, "pct": 37.0452380952381, "poy": "FP11915R", "poy_spec": "120/72 SDR"}, {"machine": "T04", "batch": "FD2F43C2", "actual_batch": "2F43C2", "status": "ok", "td_plan": 1.4, "td_actual": 2.8125, "finish_forecast": "", "note": "織染JH", "spec": "75/72/2 SDR", "date_range": "4/15-5/31", "days": 30, "target": 42000.0, "stored": 15559, "grades": {"A": 14850, "AX": 709}, "demand": -26441.0, "pct": 37.0452380952381, "poy": "FP11915R", "poy_spec": "120/72 SDR"}, {"machine": "T05", "batch": "FD2F6GT2K LIKE", "actual_batch": "2F6IA2", "status": "diff", "td_plan": 2.5, "td_actual": NaN, "finish_forecast": "", "note": "", "spec": "150/48/2 SDr", "date_range": "5/4-5/31", "days": 26, "target": 65000.0, "stored": 0, "grades": {}, "demand": -65000.0, "pct": 0.0, "poy": "FP82xxxR", "poy_spec": "255/48 SDR"}, {"machine": "T05", "batch": "FD2F7D93K", "actual_batch": "2F6IA2", "status": "diff", "td_plan": 3.2, "td_actual": NaN, "finish_forecast": "", "note": "YKK小包A+AX", "spec": "225/72/2 SDr退稅", "date_range": "4/15-5/3X", "days": 3, "target": 9600.000000000002, "stored": 9385, "grades": {"A": 8580, "AX": 805}, "demand": -215.00000000000182, "pct": 97.76041666666664, "poy": "FP83023R", "poy_spec": "340/72 SDR"}, {"machine": "T05", "batch": "FD2F6GT2K LIKE", "actual_batch": "2F6IA2", "status": "diff", "td_plan": 2.5, "td_actual": NaN, "finish_forecast": "", "note": "", "spec": "150/48/2 SDr", "date_range": "5/4-5/31", "days": 26, "target": 65000.0, "stored": 0, "grades": {}, "demand": -65000.0, "pct": 0.0, "poy": "FP82xxxR", "poy_spec": "255/48 SDR"}, {"machine": "T06", "batch": "FD2F6GT2K", "actual_batch": "2F6GT2", "status": "ok", "td_plan": 5, "td_actual": 5.82995951417004, "finish_forecast": "", "note": "內銷 大包80T AW", "spec": "150/48/2 SDr", "date_range": "4/12-5/31", "days": 30, "target": 150000, "stored": 29584, "grades": {"A": 24915, "AX": 3858, "B": 811}, "demand": -121227, "pct": 19.182, "poy": "FP82170R(L56", "poy_spec": "255/48 SDR"}];
         const tableBody = document.getElementById('tableBody');
         const searchInput = document.getElementById('searchInput');
         const engineerSpecs = {
@@ -87,8 +106,8 @@
 
         function setEngineer(eng, btn) {
             currentEngineer = eng;
-            document.querySelectorAll('.btn').forEach(b => { b.classList.remove('btn-primary', 'active'); b.classList.add('btn-default'); });
-            btn.classList.remove('btn-default'); btn.classList.add('btn-primary', 'active');
+            document.querySelectorAll('.btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
             renderTable(searchInput.value);
         }
 
@@ -110,42 +129,51 @@
                 });
             }
             filtered = filtered.filter(item => {
-                const searchStr = `${item.machine} ${item.batch} ${item.actual_batch} ${item.note} ${item.spec} ${item.poy} ${item.poy_spec}`.toLowerCase();
+                const searchStr = `${item.machine} ${item.batch} ${item.actual_batch} ${item.spec}`.toLowerCase();
                 return searchStr.includes(filter.toLowerCase());
             });
+            
             filtered.forEach(item => {
-                const progress = item.pct;
-                const demand = item.demand;
-                const grades = item.grades;
-                const statusClass = demand >= 0 ? 'status-positive' : 'status-negative';
-                const displayDemand = demand >= 0 ? `+${Math.round(demand).toLocaleString()}` : Math.round(demand).toLocaleString();
+                const tdPlan = item.td_plan;
+                const tdAct = item.td_actual;
+                const tdDiff = tdAct - tdPlan;
+                const tdClass = tdDiff >= 0 ? 'td-up' : 'td-down';
+                const tdIcon = tdDiff >= 0 ? '▲' : '▼';
                 
                 let gradeHtml = `<b>${Math.round(item.stored).toLocaleString()}</b><br>`;
-                Object.keys(grades).forEach(g => { 
-                    gradeHtml += `<span class="grade-tag grade-${g}">${g}:${Math.round(grades[g]).toLocaleString()}</span>`; 
+                Object.keys(item.grades).forEach(g => { 
+                    gradeHtml += `<span style="font-size:10px; margin-right:4px; color:#64748b">${g}:${Math.round(item.grades[g]).toLocaleString()}</span>`; 
                 });
 
-                const dotClass = `dot-${item.status}`;
-                const actualText = item.actual_batch ? `現場: ${item.actual_batch}` : "現場: 無數據";
+                const forecastHtml = item.finish_forecast ? `<div class="forecast-tag">預計完工: ${item.finish_forecast}</div>` : "";
                 
                 const row = document.createElement('tr');
                 row.innerHTML = `
                     <td data-label="機台"><span class="badge machine-tag">${item.machine}</span></td>
                     <td data-label="批號 (計畫/現場)">
-                        <span class="status-dot ${dotClass}"></span><b>${item.batch}</b>
-                        <div class="actual-box">${actualText}</div>
+                        <span class="status-dot dot-${item.status}"></span><b>${item.batch}</b>
+                        <div style="font-size:11px; color:#64748b; margin-top:4px">現場: ${item.actual_batch || "---"}</div>
+                        ${forecastHtml}
                     </td>
-                    <td data-label="備註"><small>${item.note}</small></td>
+                    <td data-label="生產效率 (T/D)">
+                        <div class="td-box">
+                            計: ${tdPlan.toFixed(2)}<br>
+                            現: <span class="${tdClass}">${tdAct.toFixed(2)}</span> 
+                            <small class="${tdClass}">${tdIcon}${Math.abs(tdDiff).toFixed(2)}</small>
+                        </div>
+                    </td>
                     <td data-label="規格"><small>${item.spec}</small></td>
                     <td data-label="排產日期"><small>${item.date_range}</small></td>
-                    <td data-label="天數">${item.days}</td>
-                    <td data-label="T/D">${item.td}</td>
-                    <td data-label="排產總量">${Math.round(item.target).toLocaleString()}</td>
+                    <td data-label="排產量">${Math.round(item.target).toLocaleString()}</td>
                     <td data-label="已繳庫">${gradeHtml}</td>
-                    <td data-label="進度(不含B/C級)"><div class="progress-bar-container"><div class="progress-inner" style="width: ${progress}%"></div></div><span style="font-size: 11px">${progress.toFixed(0)}%</span></td>
-                    <td data-label="需求量" class="${statusClass}">${displayDemand}</td>
-                    <td data-label="POY批號"><small>${item.poy}</small></td>
-                    <td data-label="POY規格"><small>${item.poy_spec}</small></td>
+                    <td data-label="進度">
+                        <div class="progress-bar-container"><div class="progress-inner" style="width: ${item.pct}%"></div></div>
+                        <div style="font-size:10px">${item.pct.toFixed(0)}%</div>
+                    </td>
+                    <td data-label="需求量" style="color:${item.demand >= 0 ? '#22c55e' : '#ef4444'}; font-weight:bold">
+                        ${item.demand >= 0 ? '+' : ''}${Math.round(item.demand).toLocaleString()}
+                    </td>
+                    <td data-label="POY資訊"><small>${item.poy}<br>${item.poy_spec}</small></td>
                 `;
                 tableBody.appendChild(row);
             });
