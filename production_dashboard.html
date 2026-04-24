@@ -63,7 +63,7 @@
         <div class="header">
             <h1>🚀 撚二科產銷戰情室 2.0 <small style="font-size: 12px; color: var(--text-sub); font-weight: normal;">Ver 2.0 (New Engine)</small></h1>
             <div style="text-align: right;">
-                <div style="font-size: 12px; color: var(--text-sub);">數據同步：2026-04-24 22:14:48</div>
+                <div style="font-size: 12px; color: var(--text-sub);">數據同步：2026-04-24 22:19:24</div>
                 <div style="font-size: 11px; color: var(--success);">● 引擎連接正常 (LISA Core Active)</div>
             </div>
         </div>
@@ -106,7 +106,7 @@
         <div id="poySummary" style="display:none; margin-bottom: 20px; background: #eff6ff; padding: 15px; border-radius: 12px; border: 1px solid #bfdbfe;"></div>
         <div class="table-container">
             <table>
-                <thead><tr><th>機台狀態</th><th>批號 (計畫/現場)</th><th>效率 (計/平均)</th><th>規格需求</th><th>已繳庫量</th><th>預計完工</th><th>POY 庫存預警</th></tr></thead>
+                <thead><tr><th>機台狀態</th><th>批號 (產銷/實際)</th><th>效率 (計/平均)</th><th>規格需求</th><th>已繳庫量</th><th>預計完工</th><th>POY 庫存預警</th></tr></thead>
                 <tbody id="tableBody"></tbody>
             </table>
         </div>
@@ -136,7 +136,7 @@
                 const demandLabel = d.demand >= 0 ? '盈餘' : '缺';
                 const demandColor = d.demand >= 0 ? 'var(--success)' : 'var(--text-sub)';
 
-                tr.innerHTML = `<td data-label="機台"><span class="machine-badge">${d.machine}</span>${d.status_text ? `<div style="color:var(--danger); font-size:11px; font-weight:bold; margin-top:5px;">● ${d.status_text}</div>` : ''}</td><td data-label="批號"><span class="status-dot ${statusDot}"></span><strong>${d.batch}</strong><div style="font-size:11px; color:var(--text-sub); margin-top:4px;">現場: ${d.actual_batch}</div></td><td data-label="效率"><div style="font-size:12px;">計: ${d.td_plan.toFixed(2)}</div><div style="font-size:13px; font-weight:bold; color:var(--primary);">均: ${d.td_actual.toFixed(2)}</div></td><td data-label="規格/目標"><div style="font-size:12px; font-weight:600;">${d.spec}</div><div style="font-size:11px; color:var(--text-sub);">目標: ${Math.round(d.target).toLocaleString()} KG</div></td><td data-label="已繳庫量"><div style="font-weight:bold;">${Math.round(d.stored).toLocaleString()} KG</div><div class="stat-progress" style="width:80px; height:4px; margin-top:5px;"><div class="stat-progress-bar" style="width:${d.pct}%; background:var(--success);"></div></div><div style="font-size:10px; color:var(--text-sub);">${d.pct.toFixed(0)}%</div></td><td data-label="預計完工"><span class="forecast-badge">${d.finish_forecast || '---'}</span><div style="font-size:10px; color:${demandColor}; margin-top:4px;">${demandLabel}: ${Math.round(Math.abs(d.demand)).toLocaleString()}</div></td><td data-label="POY"><div style="font-size:12px; font-weight:bold;">${d.poy}</div><span class="poy-tag ${poyWarnClass}">支撐: ${d.poy_days > 99 ? '---' : d.poy_days.toFixed(1) + '天'}</span></td>`;
+                tr.innerHTML = `<td data-label="機台"><span class="machine-badge">${d.machine}</span>${d.status_text ? `<div style="color:var(--danger); font-size:11px; font-weight:bold; margin-top:5px;">● ${d.status_text}</div>` : ''}</td><td data-label="批號"><span class="status-dot ${statusDot}"></span><strong>${d.batch}</strong><div style="font-size:11px; color:var(--text-sub); margin-top:4px;">實際: ${d.actual_batch}</div></td><td data-label="效率"><div style="font-size:12px;">計: ${d.td_plan.toFixed(2)}</div><div style="font-size:13px; font-weight:bold; color:var(--primary);">均: ${d.td_actual.toFixed(2)}</div></td><td data-label="規格/目標"><div style="font-size:12px; font-weight:600;">${d.spec}</div><div style="font-size:11px; color:var(--text-sub);">目標: ${Math.round(d.target).toLocaleString()} KG</div></td><td data-label="已繳庫量"><div style="font-weight:bold;">${Math.round(d.stored).toLocaleString()} KG</div><div class="stat-progress" style="width:80px; height:4px; margin-top:5px;"><div class="stat-progress-bar" style="width:${d.pct}%; background:var(--success);"></div></div><div style="font-size:10px; color:var(--text-sub);">${d.pct.toFixed(0)}%</div></td><td data-label="預計完工"><span class="forecast-badge">${d.finish_forecast || '---'}</span><div style="font-size:10px; color:${demandColor}; margin-top:4px;">${demandLabel}: ${Math.round(Math.abs(d.demand)).toLocaleString()}</div></td><td data-label="POY"><div style="font-size:12px; font-weight:bold;">${d.poy}</div><span class="poy-tag ${poyWarnClass}">支撐: ${d.poy_days > 99 ? '---' : d.poy_days.toFixed(1) + '天'}</span></td>`;
                 tbody.appendChild(tr);
             });
         }
