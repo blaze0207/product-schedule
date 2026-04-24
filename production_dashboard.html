@@ -76,7 +76,7 @@
     
     <div class="info-bar">
         <div>📄 計畫: DTYMay26產銷260416-1450+300+30.xlsx | 📅 繳庫: 2026/04/23</div>
-        <div>🕒 網頁同步: 11:34:47</div>
+        <div>🕒 網頁同步: 11:38:25</div>
     </div>
 
     <div class="filter-group">
@@ -89,7 +89,7 @@
         <table id="dataTable">
             <thead>
                 <tr>
-                    <th>機台</th><th>批號 (計畫/現場)</th><th>生產效率 (T/D)</th><th>規格</th><th>排產日期</th><th>排產量 (KG)</th><th>已繳庫 (KG)</th><th>進度</th><th>需求量</th><th>POY資訊</th>
+                    <th>機台</th><th>批號 (計畫/現場)</th><th>備註</th><th>生產效率 (T/D)</th><th>規格</th><th>排產日期</th><th>排產量 (KG)</th><th>已繳庫 (KG)</th><th>進度</th><th>需求量</th><th>POY資訊</th>
                 </tr>
             </thead>
             <tbody id="tableBody"></tbody>
@@ -131,7 +131,7 @@
                 });
             }
             filtered = filtered.filter(item => {
-                const searchStr = `${item.machine} ${item.batch} ${item.actual_batch} ${item.spec}`.toLowerCase();
+                const searchStr = `${item.machine} ${item.batch} ${item.actual_batch} ${item.spec} ${item.note}`.toLowerCase();
                 return searchStr.includes(filter.toLowerCase());
             });
             
@@ -167,6 +167,7 @@
                         <div style="font-size:11px; color:#64748b; margin-top:4px">現場: ${item.actual_batch || "---"}</div>
                         ${forecastHtml}
                     </td>
+                    <td data-label="備註"><small>${item.note}</small></td>
                     <td data-label="生產效率 (T/D)">
                         <div class="td-box">
                             計: ${tdPlan.toFixed(2)}<br>
