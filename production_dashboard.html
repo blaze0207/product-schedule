@@ -4,86 +4,342 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>撚二科產銷戰情室 3.0 (事實導向)</title>
+    <title>撚二科生產戰情室</title>
     <style>
-        :root { --primary: #0f172a; --accent: #3b82f6; --success: #10b981; --warning: #f59e0b; --danger: #ef4444; --bg: #f1f5f9; --card: #ffffff; }
-        * { box-sizing: border-box; font-family: 'Segoe UI', 'Microsoft JhengHei', sans-serif; }
-        body { background: var(--bg); margin: 0; padding: 20px; color: #1e293b; }
-        .header { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 25px; border-bottom: 2px solid #e2e8f0; padding-bottom: 15px; }
-        .header h1 { margin: 0; font-size: 24px; color: var(--primary); }
-        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 20px; margin-bottom: 30px; }
-        .stat-box { background: var(--card); padding: 20px; border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); border-left: 6px solid var(--accent); }
-        .stat-box.success { border-left-color: var(--success); }
-        .stat-label { font-size: 13px; font-weight: 700; color: #64748b; margin-bottom: 8px; display: block; }
-        .stat-value { font-size: 28px; font-weight: 900; color: #0f172a; }
-        .table-wrapper { background: var(--card); border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); overflow: hidden; }
-        table { width: 100%; border-collapse: collapse; min-width: 1000px; }
-        th { background: #f8fafc; padding: 16px; text-align: left; font-size: 12px; color: #475569; }
-        td { padding: 16px; border-bottom: 1px solid #f1f5f9; font-size: 14px; }
-        tr.inactive { background: #fafafa; opacity: 0.7; }
-        .machine-tag { background: #eff6ff; color: #1d4ed8; padding: 6px 12px; border-radius: 8px; font-weight: 900; border: 1px solid #bfdbfe; }
-        .badge { padding: 4px 8px; border-radius: 6px; font-size: 11px; font-weight: 700; }
-        .badge-success { background: #dcfce7; color: #166534; }
-        .progress-container { width: 80px; height: 5px; background: #e2e8f0; border-radius: 3px; margin-top: 5px; overflow: hidden; }
-        .progress-fill { height: 100%; background: var(--success); }
-        .search-bar { width: 100%; max-width: 400px; padding: 10px 15px; border: 2px solid #e2e8f0; border-radius: 10px; margin-bottom: 20px; outline: none; }
-        @media (max-width: 992px) {
-            table, thead, tbody, th, td, tr { display: block; width: 100%; }
-            thead { display: none; }
-            tr { background: #fff; margin-bottom: 15px; border-radius: 12px; padding: 10px; border: 1px solid #e2e8f0; }
-            td { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid #f8fafc; }
-            td::before { content: attr(data-label); font-weight: 800; font-size: 12px; color: #64748b; }
-            .td-content { text-align: right; }
+        :root { 
+            --primary: #0f172a; 
+            --secondary: #1e293b;
+            --accent: #2563eb; 
+            --success: #059669; 
+            --warning: #d97706;
+            --danger: #dc2626;
+            --bg: #f1f5f9; 
+            --card: #ffffff; 
+            --text-main: #1e293b;
+            --text-muted: #64748b;
+        }
+        
+        * { box-sizing: border-box; font-family: 'Inter', 'Segoe UI', "Microsoft JhengHei", sans-serif; margin: 0; padding: 0; }
+        body { background: var(--bg); padding: 0; color: var(--text-main); line-height: 1.5; }
+        
+        /* 頂部標題列 - 專業深色風格 */
+        .top-header { 
+            background: var(--primary); 
+            color: white; 
+            padding: 15px 30px; 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            position: sticky; top: 0; z-index: 100;
+        }
+        .top-header h1 { font-size: 24px; font-weight: 800; letter-spacing: 2px; display: flex; align-items: center; gap: 10px; }
+        .top-header h1::before { content: ''; display: inline-block; width: 4px; height: 24px; background: var(--accent); border-radius: 2px; }
+        
+        .header-info { text-align: right; font-family: 'Consolas', monospace; }
+        .header-info div { font-size: 12px; opacity: 0.8; margin-bottom: 2px; }
+        .date-highlight { color: #60a5fa; font-weight: bold; }
+
+        .main-container { padding: 25px; max-width: 1600px; margin: 0 auto; }
+
+        /* 數據概覽卡片 */
+        .summary-bar { display: grid; grid-template-columns: repeat(2, minmax(300px, 1fr)); gap: 20px; margin-bottom: 25px; }
+        .summary-card { 
+            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%); 
+            color: white; 
+            padding: 20px; 
+            border-radius: 12px; 
+            box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1);
+            position: relative; overflow: hidden;
+        }
+        .summary-card::after { content: ''; position: absolute; right: -20px; bottom: -20px; width: 100px; height: 100px; background: rgba(255,255,255,0.05); border-radius: 50%; }
+        .summary-label { font-size: 13px; text-transform: uppercase; letter-spacing: 1px; opacity: 0.7; margin-bottom: 8px; }
+        .summary-value { font-size: 36px; font-weight: 900; font-family: 'Bahnschrift', sans-serif; }
+        .summary-unit { font-size: 16px; margin-left: 8px; font-weight: normal; opacity: 0.6; }
+        .card-accent { background: linear-gradient(135deg, #1e3a8a 0%, #2563eb 100%); }
+
+        /* 搜尋與分析區塊 */
+        .interactive-section { background: white; padding: 20px; border-radius: 12px; margin-bottom: 25px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); border-top: 4px solid var(--accent); }
+        .interactive-bar { display: flex; gap: 20px; align-items: flex-start; }
+        .search-box { flex: 0 0 350px; position: relative; display: flex; align-items: center; }
+        .search-input { 
+            width: 100%; padding: 14px 45px 14px 15px; border-radius: 8px; 
+            border: 2px solid #e2e8f0; font-size: 16px; outline: none; transition: all 0.3s; 
+            background: #f8fafc;
+        }
+        .search-input:focus { border-color: var(--accent); background: white; box-shadow: 0 0 0 4px rgba(37,99,235,0.1); }
+        .clear-btn { position: absolute; right: 15px; cursor: pointer; color: var(--danger); font-size: 20px; font-weight: 900; display: none; transition: transform 0.1s; }
+        .clear-btn:hover { transform: scale(1.2); color: #be123c; }
+        
+        .analysis-panel { 
+            flex: 1; border-radius: 10px; padding: 15px 20px; display: none; 
+            background: #f0f7ff; border: 1px solid #bae6fd; animation: slideIn 0.4s ease-out;
+        }
+        @keyframes slideIn { from { opacity: 0; transform: translateX(20px); } to { opacity: 1; transform: translateX(0); } }
+
+        /* 表格樣式優化 */
+        .table-wrapper { background: var(--card); border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.05); overflow: hidden; }
+        table { width: 100%; border-collapse: collapse; table-layout: fixed; }
+        th { background: #f8fafc; padding: 15px 12px; text-align: left; font-size: 12px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.1em; border-bottom: 2px solid #e2e8f0; }
+        td { padding: 16px 12px; border-bottom: 1px solid #f1f5f9; font-size: 15px; vertical-align: top; word-wrap: break-word; }
+        
+        tr.active { background: white; }
+        tr.active:hover { background: #f8fafc; }
+        tr.history { background: #fbfcfd; opacity: 0.85; }
+        tr.history td { color: var(--text-muted); }
+
+        .machine-badge { 
+            background: var(--primary); color: white; padding: 6px 10px; border-radius: 6px; 
+            font-weight: 800; font-size: 14px; display: inline-flex; align-items: center; gap: 5px;
+        }
+        
+        /* 狀態點與動畫 */
+        .status-indicator { display: flex; align-items: center; gap: 8px; font-weight: bold; }
+        .dot { width: 8px; height: 8px; border-radius: 50%; }
+        .dot-running { background: var(--success); box-shadow: 0 0 8px var(--success); animation: pulse 2s infinite; }
+        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.4; } 100% { opacity: 1; } }
+        .dot-stopped { background: var(--text-muted); }
+
+        .batch-text { font-weight: 700; color: var(--primary); font-size: 16px; display: block; margin-bottom: 4px; }
+        .spec-text { font-size: 13px; color: var(--text-muted); }
+
+        /* POY 卡片化顯示 */
+        .poy-info-box { 
+            margin-bottom: 12px; padding: 10px; border-radius: 8px; 
+            background: #f8fafc; border-left: 4px solid #cbd5e1; transition: all 0.2s;
+        }
+        .poy-info-box:hover { border-left-color: var(--accent); background: #f1f5f9; }
+        .clickable-poy { cursor: pointer; color: var(--accent); font-weight: 800; font-family: 'Consolas', monospace; font-size: 15px; }
+        .stock-label { font-size: 13px; font-weight: 900; margin-top: 5px; }
+        .history-tag { font-size: 11px; color: var(--text-muted); margin-top: 3px; display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+        /* LISA 庫存標籤 */
+        .stock-tags { display: flex; flex-wrap: wrap; gap: 4px; }
+        .tag { font-size: 11px; padding: 2px 6px; border-radius: 4px; font-weight: 700; }
+        .tag-a { background: #d1fae5; color: #065f46; }
+        .tag-ax { background: #fef3c7; color: #92400e; }
+        .tag-b { background: #ffedd5; color: #9a3412; }
+        .tag-c { background: #fee2e2; color: #991b1b; }
+        .total-stock { font-size: 18px; font-weight: 900; color: var(--primary); margin-top: 5px; display: block; }
+        /* 響應式 RWD 支援 */
+        @media (max-width: 768px) {
+            .top-header { flex-direction: column; align-items: flex-start; gap: 10px; padding: 15px; }
+            .header-info { text-align: left; }
+            .main-container { padding: 15px; }
+            .summary-bar { grid-template-columns: 1fr; }
+            .interactive-bar { flex-direction: column; }
+            .search-box { flex: 1 0 auto; width: 100%; }
+            
+            /* 表格轉卡片邏輯 */
+            table, thead, tbody, th, td, tr { display: block; }
+            thead { display: none; } /* 隱藏表頭 */
+            tr { 
+                margin-bottom: 20px; border: 1px solid #e2e8f0; border-radius: 12px; 
+                background: white; box-shadow: 0 2px 4px rgba(0,0,0,0.05); overflow: hidden;
+            }
+            td { 
+                border: none; position: relative; padding-left: 40%; text-align: left; 
+                border-bottom: 1px solid #f1f5f9; min-height: 45px;
+            }
+            td::before { 
+                content: attr(data-label); position: absolute; left: 15px; width: 35%; 
+                font-size: 12px; font-weight: bold; color: var(--text-muted); text-transform: uppercase;
+            }
+            .poy-info-box { border-left-width: 2px; padding: 5px 0 5px 10px; margin-top: 5px; }
+            .machine-badge { font-size: 16px; }
         }
     </style>
 </head>
 <body>
-    <div style="background: #fef2f2; color: #b91c1c; border: 2px solid #fecaca; padding: 15px; text-align: center; font-weight: bold; margin: 0 0 20px 0; border-radius: 10px; font-size: 18px;">
-        ⚠️ 3.0 版本架構重構中 (事實導向)，部分數據正在校準，目前僅供參考 ⚠️
+    <header class="top-header">
+        <h1>撚二科生產戰情室</h1>
+        <div class="header-info">
+            <div>SYSTEM ENGINE: <span class="date-highlight">v3.2 PROFESSIONAL</span></div>
+            <div>數據同步：2026-04-27 12:05:08</div>
+            <div>生產資訊日期：<span class="date-highlight">2026/04/25</span></div>
+            <div>庫存更新日期：<span class="date-highlight">2026/04/26</span></div>
+        </div>
+    </header>
+
+    <div class="main-container">
+        <div class="summary-bar">
+            <div class="summary-card">
+                <div class="summary-label">本月累計繳庫 (自產)</div>
+                <div class="summary-value">1,205,965.5<span class="summary-unit">KG</span></div>
+            </div>
+            <div class="summary-card card-accent">
+                <div class="summary-label">今日生產總量 (2026/04/25)</div>
+                <div class="summary-value">47.69<span class="summary-unit">T</span></div>
+            </div>
+        </div>
+
+        <section class="interactive-section">
+            <div class="interactive-bar">
+                <div class="search-box">
+                    <input type="text" id="poySearch" class="search-input" placeholder="輸入或點擊 POY 批號追蹤分析..." oninput="handleSearch(this.value)">
+                    <span id="clearSearch" class="clear-btn" onclick="clearSearch()">&times;</span>
+                </div>
+                <div id="analysisPanel" class="analysis-panel"></div>
+            </div>
+        </section>
+
+        <div class="table-wrapper">
+            <table>
+                <thead>
+                    <tr>
+                        <th style="width: 10%">機台</th>
+                        <th style="width: 15%">狀態</th>
+                        <th style="width: 15%">批號 / 規格</th>
+                        <th style="width: 25%">POY庫存(A+A2)</th>
+                        <th style="width: 8%">平均日產</th>
+                        <th style="width: 7%">生產天數</th>
+                        <th style="width: 20%">繳庫量</th>
+                    </tr>
+                </thead>
+                <tbody id="tableBody"></tbody>
+            </table>
+        </div>
     </div>
-    <div class="header">
-        <div><h1>📊 撚二科產銷戰情室 3.0</h1><small style="color:#64748b; font-weight:bold;">事實導向架構</small></div>
-        <div style="text-align: right;"><div style="font-size: 12px;">數據同步：2026-04-25 00:37:10</div></div>
-    </div>
-    <div class="stats-grid">
-        <div class="stat-box"><span class="stat-label">全月排產總目標</span><span class="stat-value">1,255.8<small style="font-size:14px;">T</small></span></div>
-        <div class="stat-box success"><span class="stat-label">本月自產繳庫量</span><span class="stat-value">1,043.66<small style="font-size:14px;">T</small></span><span style="font-size:12px; color:var(--success); font-weight:bold; margin-left:10px;">達成: 83.1%</span></div>
-        <div class="stat-box"><span class="stat-label">今日運行機台</span><span class="stat-value">25<small style="font-size:14px;">台</small></span></div>
-    </div>
-    <input type="text" id="mainSearch" class="search-bar" placeholder="🔍 搜尋機台、批號、備註...">
-    <div class="table-wrapper">
-        <table>
-            <thead><tr><th>機台狀態</th><th>批號 (產銷/實際)</th><th>規格</th><th>日產(預計/實際)</th><th>生產天數</th><th>已繳庫量</th><th>預計完工</th><th>POY預警</th></tr></thead>
-            <tbody id="tableBody"></tbody>
-        </table>
-    </div>
+
     <script>
-        const rawData = [{"machine": "A07 (A/L)", "batch": "停機", "status_text": "", "td_plan": 0, "td_actual": 0.0, "target": 0, "stored": 0.0, "demand": 0.0, "pct": 0, "finish_forecast": "---", "poy": "NAN", "poy_days": 999, "spec": "nan", "note": "", "days_active": 0}, {"machine": "A08 (A/L)", "batch": "2F08P2", "status_text": "", "td_plan": 0, "td_actual": 0.0, "target": 0, "stored": 12240.0, "demand": 12240.0, "pct": 0, "finish_forecast": "---", "poy": "FP80141", "poy_days": 999, "spec": "50/72BSD3", "note": "", "days_active": 0}, {"machine": "A08 (A/L/B/A)", "batch": "2FA032", "status_text": "", "td_plan": 0.7, "td_actual": 1.8661158785454546, "target": 42000.0, "stored": 6840.0, "demand": -35160.0, "pct": 16.28571428571429, "finish_forecast": "05/14", "poy": "FP81386R", "poy_days": 23.651800248547598, "spec": "75/36SDR", "note": "JH 20TAW毅", "days_active": 22}, {"machine": "A09 (B/R/A/L/B/A)", "batch": "2F42S2", "status_text": "", "td_plan": 0.7, "td_actual": 1.5370012800000004, "target": 42000.0, "stored": 23550.0, "demand": -18450.0, "pct": 56.07142857142857, "finish_forecast": "05/06", "poy": "FP81363R×2", "poy_days": 5.100190938032269, "spec": "75/24/2SDR2", "note": "A+AX", "days_active": 21}, {"machine": "A09 (B/R/A/L)", "batch": "2F42V1", "status_text": "", "td_plan": 0, "td_actual": 0.0, "target": 0, "stored": 6384.0, "demand": 6384.0, "pct": 0, "finish_forecast": "---", "poy": "FP81380R×2", "poy_days": 999, "spec": "75/36/2SDRP", "note": "", "days_active": 0}, {"machine": "A10 (A/L)", "batch": "停機", "status_text": "", "td_plan": 0, "td_actual": 0.0, "target": 0, "stored": 0.0, "demand": 0.0, "pct": 0, "finish_forecast": "---", "poy": "NAN", "poy_days": 999, "spec": "nan", "note": "", "days_active": 0}, {"machine": "A11 (B/A)", "batch": "2F1YR2", "status_text": "", "td_plan": 1.2, "td_actual": 1.317629394782609, "target": 36000.0, "stored": 28248.0, "demand": -7752.0, "pct": 78.46666666666667, "finish_forecast": "04/30", "poy": "FP81857R", "poy_days": 20.764564078743877, "spec": "75/36HC", "note": "AW56.5T+26T AW", "days_active": 23}, {"machine": "A12 (B/A)", "batch": "2F42T2", "status_text": "", "td_plan": 1.5, "td_actual": 1.5954236139130433, "target": 45000.0, "stored": 46320.0, "demand": 1320.0, "pct": 100, "finish_forecast": "達標", "poy": "FP81363R×2", "poy_days": 4.913428591403095, "spec": "75/24/2SDR2", "note": "A+AX", "days_active": 23}, {"machine": "A13 (A/L)", "batch": "停機", "status_text": "", "td_plan": 0, "td_actual": 0.0, "target": 0, "stored": 0.0, "demand": 0.0, "pct": 0, "finish_forecast": "---", "poy": "NAN", "poy_days": 999, "spec": "nan", "note": "", "days_active": 0}, {"machine": "A14 (A/L)", "batch": "停機", "status_text": "", "td_plan": 0, "td_actual": 0.0, "target": 0, "stored": 0.0, "demand": 0.0, "pct": 0, "finish_forecast": "---", "poy": "NAN", "poy_days": 999, "spec": "nan", "note": "", "days_active": 0}, {"machine": "A15 (A/L)", "batch": "停機", "status_text": "", "td_plan": 0, "td_actual": 0.0, "target": 0, "stored": 0.0, "demand": 0.0, "pct": 0, "finish_forecast": "---", "poy": "NAN", "poy_days": 999, "spec": "nan", "note": "", "days_active": 0}, {"machine": "A16 (B/R/A/L/B/A)", "batch": "2F1YX2", "status_text": "", "td_plan": 1.4, "td_actual": 1.9196127183673468, "target": 28000.0, "stored": 41220.0, "demand": 13220.0, "pct": 100, "finish_forecast": "達標", "poy": "FP81362R", "poy_days": 0.0, "spec": "75/72SDR", "note": "wooly中噴(寬?", "days_active": 14}, {"machine": "A17 (A/L)", "batch": "2F08Q2", "status_text": "", "td_plan": 0, "td_actual": 0.0, "target": 0, "stored": 600.0, "demand": 600.0, "pct": 0, "finish_forecast": "---", "poy": "FP80139", "poy_days": 999, "spec": "50/72F2FC", "note": "", "days_active": 0}, {"machine": "A17 (B/R/A/L/A)", "batch": "2F1YT1", "status_text": "", "td_plan": 0.6, "td_actual": 0.6038712, "target": 0.0, "stored": 43126.0, "demand": 43126.0, "pct": 0, "finish_forecast": "---", "poy": "FP11914R", "poy_days": 0.0, "spec": "75/144SDR", "note": "新紡JH", "days_active": 1}, {"machine": "A18 (A/L/B/A)", "batch": "2F42M2", "status_text": "", "td_plan": 1.5, "td_actual": 1.6434177808695654, "target": 45000.0, "stored": 67380.0, "demand": 22380.0, "pct": 100, "finish_forecast": "達標", "poy": "FP81364R×2", "poy_days": 2.7747052837576165, "spec": "75/24/2SDR1", "note": "A+AX", "days_active": 23}, {"machine": "A19 (A/L/A)", "batch": "2F42L2", "status_text": "", "td_plan": 1.3, "td_actual": 1.62087237, "target": 7800.000000000001, "stored": 21420.0, "demand": 13620.0, "pct": 100, "finish_forecast": "達標", "poy": "FP82162R", "poy_days": 0.0, "spec": "150/48SDR", "note": "中噴, 共用", "days_active": 4}, {"machine": "A19 (B/R/A/L/B/A)", "batch": "2F42Y1", "status_text": "", "td_plan": 1.2, "td_actual": 1.474879536, "target": 36000.0, "stored": 16260.0, "demand": -19740.0, "pct": 45.166666666666664, "finish_forecast": "---", "poy": "FP82163R", "poy_days": 0.0, "spec": "150/48SDR", "note": "SET 95/20 Alex", "days_active": 10}, {"machine": "A20 (B/R/A/L/B/A)", "batch": "2F29H2", "status_text": "", "td_plan": 0, "td_actual": 2.1790130605714286, "target": 0, "stored": 27552.0, "demand": 27552.0, "pct": 0, "finish_forecast": "---", "poy": "FP81385R", "poy_days": 0.9040790235022196, "spec": "100/72PFR", "note": "", "days_active": 14}, {"machine": "A21 (A/L/A)", "batch": "2F29B1", "status_text": "", "td_plan": 0, "td_actual": 0.9486288, "target": 0, "stored": 0.0, "demand": 0.0, "pct": 0, "finish_forecast": "---", "poy": "FP81368R", "poy_days": 3.605203637081227, "spec": "100/36SDR", "note": "", "days_active": 1}, {"machine": "A21 (B/A)", "batch": "2F29G1", "status_text": "", "td_plan": 2.0, "td_actual": 0.9987768, "target": 4000.0, "stored": 3990.0, "demand": -10.0, "pct": 99.75, "finish_forecast": "04/25", "poy": "FP81384R", "poy_days": 18.640801428307107, "spec": "100/36SDR", "note": "沂 AW 5T 純set", "days_active": 6}, {"machine": "A22 (B/R/A/L/B)", "batch": "2F1YW1", "status_text": "", "td_plan": 0, "td_actual": 0.5475208500000001, "target": 0, "stored": 14112.0, "demand": 14112.0, "pct": 0, "finish_forecast": "---", "poy": "FP11914R", "poy_days": 0.0, "spec": "75/144SDR", "note": "", "days_active": 4}, {"machine": "A23 (A/L)", "batch": "2F42Q1", "status_text": "", "td_plan": 1.2, "td_actual": 0.0, "target": 2400.0, "stored": 0.0, "demand": -2400.0, "pct": 0.0, "finish_forecast": "---", "poy": "FP82163R", "poy_days": 999, "spec": "150/48SDR", "note": "SET 35/10 Alex", "days_active": 0}, {"machine": "A24 (A/L)", "batch": "停機", "status_text": "", "td_plan": 0, "td_actual": 0.0, "target": 0, "stored": 0.0, "demand": 0.0, "pct": 0, "finish_forecast": "---", "poy": "NAN", "poy_days": 999, "spec": "nan", "note": "", "days_active": 0}, {"machine": "J07 (A/L/L)", "batch": "2F6FU2", "status_text": "", "td_plan": 0, "td_actual": 2.9369077199999998, "target": 0, "stored": 7623.0, "demand": 7623.0, "pct": 0, "finish_forecast": "---", "poy": "FP82155R×2", "poy_days": 0.0, "spec": "150/48/2SDR2", "note": "", "days_active": 16}, {"machine": "J08 (A/L)", "batch": "停機", "status_text": "", "td_plan": 0, "td_actual": 0.0, "target": 0, "stored": 0.0, "demand": 0.0, "pct": 0, "finish_forecast": "---", "poy": "NAN", "poy_days": 999, "spec": "nan", "note": "", "days_active": 0}, {"machine": "J09 (A/L)", "batch": "停機", "status_text": "", "td_plan": 0, "td_actual": 0.0, "target": 0, "stored": 0.0, "demand": 0.0, "pct": 0, "finish_forecast": "---", "poy": "NAN", "poy_days": 999, "spec": "nan", "note": "", "days_active": 0}, {"machine": "T01 (A/L/L/R)", "batch": "2F6GH2", "status_text": "", "td_plan": 5.0, "td_actual": 6.197990400000001, "target": 30000.0, "stored": 957.0, "demand": -29043.0, "pct": 3.19, "finish_forecast": "---", "poy": "FP82156R×2", "poy_days": 0.0, "spec": "150/48/2SDR1", "note": "YKK", "days_active": 1}, {"machine": "T02 (L/R)", "batch": "2F6FV2", "status_text": "", "td_plan": 5.0, "td_actual": 6.0322514400000005, "target": 70000.0, "stored": 7986.0, "demand": -62014.0, "pct": 11.40857142857143, "finish_forecast": "05/07", "poy": "FP82155R×2", "poy_days": 0.0, "spec": "150/48/2SDR2", "note": "YKK", "days_active": 13}, {"machine": "T03 (A/L/L)", "batch": "2F6GP1", "status_text": "", "td_plan": 2.5, "td_actual": 3.3491556, "target": 75000.0, "stored": 21060.0, "demand": -53940.0, "pct": 28.08, "finish_forecast": "---", "poy": "FP82163R×2", "poy_days": 0.0, "spec": "150/48/2SDR", "note": "wooly輕噴W:5kg", "days_active": 4}, {"machine": "T03 (B/R/A/L/L/R)", "batch": "2F6GN2", "status_text": "", "td_plan": 2.5, "td_actual": 3.4516692000000004, "target": 75000.0, "stored": 33570.0, "demand": -41430.0, "pct": 44.76, "finish_forecast": "---", "poy": "FP82163R×2", "poy_days": 0.0, "spec": "150/48/2SDR", "note": "wooly中噴W:5kg", "days_active": 4}, {"machine": "T04 (A/L/L/R)", "batch": "2F42U2", "status_text": "", "td_plan": 1.4, "td_actual": 1.3832208000000001, "target": 8399.999999999998, "stored": 20088.0, "demand": 11688.000000000002, "pct": 100, "finish_forecast": "達標", "poy": "FP81365R×2", "poy_days": 9.190868153515332, "spec": "75/72/2PDR", "note": "W:4kg Patty", "days_active": 3}, {"machine": "T04 (B/R/A/L/L/R)", "batch": "2F42Z2", "status_text": "", "td_plan": 1.4, "td_actual": 1.6116516, "target": 11200.0, "stored": 10290.0, "demand": -910.0, "pct": 91.875, "finish_forecast": "---", "poy": "FP81383R×2", "poy_days": 0.0, "spec": "75/72/2SDR", "note": "5T AW,158d, AL", "days_active": 3}, {"machine": "T05 (B/R/A/L/R)", "batch": "2F6GM1", "status_text": "", "td_plan": 2.5, "td_actual": 3.2003541818181818, "target": 30000.0, "stored": 810.0, "demand": -29190.0, "pct": 2.7, "finish_forecast": "---", "poy": "FP82163R×2", "poy_days": 0.0, "spec": "150/48/2SDR", "note": "JH冠齊純SET中立包(收尾)", "days_active": 11}, {"machine": "T06 (L/R)", "batch": "2FA023", "status_text": "", "td_plan": 1.5, "td_actual": 1.63358208, "target": 7500.0, "stored": 1620.0, "demand": -5880.0, "pct": 21.6, "finish_forecast": "04/28", "poy": "FP81365R", "poy_days": 7.782284193519066, "spec": "75/72PDR", "note": "AL,W:5,經編Set重噴", "days_active": 5}, {"machine": "S01 (A/L)", "batch": "停機", "status_text": "", "td_plan": 0, "td_actual": 0.0, "target": 0, "stored": 0.0, "demand": 0.0, "pct": 0, "finish_forecast": "---", "poy": "NAN", "poy_days": 999, "spec": "nan", "note": "", "days_active": 0}, {"machine": "S02 (A/L)", "batch": "絲開發", "status_text": "", "td_plan": 0, "td_actual": 0.0, "target": 0, "stored": 0.0, "demand": 0.0, "pct": 0, "finish_forecast": "---", "poy": "NAN", "poy_days": 999, "spec": "nan", "note": "", "days_active": 0}, {"machine": "M01 (A/L)", "batch": "封存", "status_text": "", "td_plan": 0, "td_actual": 0.0, "target": 0, "stored": 0.0, "demand": 0.0, "pct": 0, "finish_forecast": "---", "poy": "NAN", "poy_days": 999, "spec": "nan", "note": "", "days_active": 0}, {"machine": "M02 (A/L)", "batch": "封存", "status_text": "", "td_plan": 0, "td_actual": 0.0, "target": 0, "stored": 0.0, "demand": 0.0, "pct": 0, "finish_forecast": "---", "poy": "NAN", "poy_days": 999, "spec": "nan", "note": "", "days_active": 0}, {"machine": "M03 (A/L)", "batch": "封存", "status_text": "", "td_plan": 0, "td_actual": 0.0, "target": 0, "stored": 0.0, "demand": 0.0, "pct": 0, "finish_forecast": "---", "poy": "NAN", "poy_days": 999, "spec": "nan", "note": "", "days_active": 0}, {"machine": "M04 (A/L)", "batch": "封存", "status_text": "", "td_plan": 0, "td_actual": 0.0, "target": 0, "stored": 0.0, "demand": 0.0, "pct": 0, "finish_forecast": "---", "poy": "NAN", "poy_days": 999, "spec": "nan", "note": "", "days_active": 0}, {"machine": "M05 (A/L)", "batch": "封存", "status_text": "", "td_plan": 0, "td_actual": 0.0, "target": 0, "stored": 0.0, "demand": 0.0, "pct": 0, "finish_forecast": "---", "poy": "NAN", "poy_days": 999, "spec": "nan", "note": "", "days_active": 0}, {"machine": "M06 (A/L)", "batch": "封存", "status_text": "", "td_plan": 0, "td_actual": 0.0, "target": 0, "stored": 0.0, "demand": 0.0, "pct": 0, "finish_forecast": "---", "poy": "NAN", "poy_days": 999, "spec": "nan", "note": "", "days_active": 0}, {"machine": "M07 (A/L)", "batch": "封存", "status_text": "", "td_plan": 0, "td_actual": 0.0, "target": 0, "stored": 0.0, "demand": 0.0, "pct": 0, "finish_forecast": "---", "poy": "NAN", "poy_days": 999, "spec": "nan", "note": "", "days_active": 0}, {"machine": "M08 (A/L)", "batch": "封存", "status_text": "", "td_plan": 0, "td_actual": 0.0, "target": 0, "stored": 0.0, "demand": 0.0, "pct": 0, "finish_forecast": "---", "poy": "NAN", "poy_days": 999, "spec": "nan", "note": "", "days_active": 0}, {"machine": "A10 (B/R/A/L/B)", "batch": "2F6GQ3", "status_text": "", "td_plan": 0, "td_actual": 0.8958632400000001, "target": 0, "stored": 6990.0, "demand": 6990.0, "pct": 0, "finish_forecast": "---", "poy": "FP02420R×2", "poy_days": 0.0, "spec": "150/48/2FBKR", "note": "", "days_active": 10}, {"machine": "A23 (A/L/B/A)", "batch": "2F43A1", "status_text": "nan", "td_plan": 1.85, "td_actual": 3.0582664559999997, "target": 49950.0, "stored": 47250.0, "demand": -2700.0, "pct": 94.5945945945946, "finish_forecast": "---", "poy": "FP82166R", "poy_days": 0.0, "spec": "150/48SDR", "note": "SET 35/10 Alex", "days_active": 17}, {"machine": "A17 (A/L)", "batch": "停機", "status_text": "", "td_plan": 0, "td_actual": 0.0, "target": 0, "stored": 0.0, "demand": 0.0, "pct": 0, "finish_forecast": "---", "poy": "NAN", "poy_days": 999, "spec": "nan", "note": "", "days_active": 0}, {"machine": "T01 (B/R/A/L)", "batch": "停機", "status_text": "", "td_plan": 0, "td_actual": 0.0, "target": 0, "stored": 0.0, "demand": 0.0, "pct": 0, "finish_forecast": "---", "poy": "NAN", "poy_days": 999, "spec": "nan", "note": "", "days_active": 0}, {"machine": "A19 (B/R/A/L)", "batch": "停機", "status_text": "", "td_plan": 0, "td_actual": 0.0, "target": 0, "stored": 0.0, "demand": 0.0, "pct": 0, "finish_forecast": "---", "poy": "NAN", "poy_days": 999, "spec": "nan", "note": "", "days_active": 0}, {"machine": "A19 (A/L/A)", "batch": "2F43B1", "status_text": "", "td_plan": 1.2, "td_actual": 1.5393938624999999, "target": 27599.999999999996, "stored": 20700.0, "demand": -6899.999999999996, "pct": 75.00000000000001, "finish_forecast": "05/03", "poy": "FP82166R", "poy_days": 0.0, "spec": "150/48SDr", "note": "SET 95/20 Alex", "days_active": 16}, {"machine": "A21 (A/L/B/A)", "batch": "2F29I1", "status_text": "", "td_plan": 2.0, "td_actual": 1.99979472, "target": 54000.0, "stored": 26400.0, "demand": -27600.0, "pct": 48.888888888888886, "finish_forecast": "05/08", "poy": "FP81384R", "poy_days": 9.3099555738401, "spec": "100/36SDr", "note": "OIA", "days_active": 15}, {"machine": "T03 (B/R/A/L/L)", "batch": "2F6GS1", "status_text": "", "td_plan": 2.5, "td_actual": 2.794635, "target": 75000.0, "stored": 25830.0, "demand": -49170.0, "pct": 34.44, "finish_forecast": "---", "poy": "FP82166R×2", "poy_days": 0.0, "spec": "150/48/2SDR", "note": "wooly輕噴W:5kg", "days_active": 10}, {"machine": "T03 (B/R/A/L/L/R)", "batch": "2F6GR2", "status_text": "", "td_plan": 2.5, "td_actual": 2.66487624, "target": 75000.0, "stored": 21900.0, "demand": -53100.0, "pct": 29.2, "finish_forecast": "---", "poy": "FP82166R×2", "poy_days": 0.0, "spec": "150/48/2SDR", "note": "wooly中噴W:5kg", "days_active": 10}, {"machine": "T04 (A/L/L/R)", "batch": "2F43C2", "status_text": "", "td_plan": 1.4, "td_actual": 2.408177952, "target": 51800.0, "stored": 14850.0, "demand": -36950.0, "pct": 28.667953667953665, "finish_forecast": "---", "poy": "FP11915R×2", "poy_days": 0.36749775873705864, "spec": "75/72/2SDR", "note": "織染JH", "days_active": 15}, {"machine": "T04 (B/R/A/L/R)", "batch": "2F9UY2", "status_text": "", "td_plan": 1.4, "td_actual": 0.0, "target": 7000.0, "stored": 150.0, "demand": -6850.0, "pct": 2.142857142857143, "finish_forecast": "---", "poy": "NAN", "poy_days": 999, "spec": "nan", "note": "Alex1.17T/JH3.7T", "days_active": 0}, {"machine": "A14 (B/R/A/L/B/A)", "batch": "2F43D2", "status_text": "", "td_plan": 2.0, "td_actual": 3.4031390399999997, "target": 22000.0, "stored": 2130.0, "demand": -19870.0, "pct": 9.681818181818182, "finish_forecast": "---", "poy": "FP82778", "poy_days": 0.0, "spec": "150/48CDR", "note": "2580kg/組", "days_active": 3}, {"machine": "A22 (A/L)", "batch": "停機", "status_text": "", "td_plan": 0, "td_actual": 0.0, "target": 0, "stored": 0.0, "demand": 0.0, "pct": 0, "finish_forecast": "---", "poy": "NAN", "poy_days": 999, "spec": "nan", "note": "", "days_active": 0}, {"machine": "T01 (B/R/A/L/L/R)", "batch": "2F6GU2", "status_text": "", "td_plan": 5.0, "td_actual": 6.337519919999999, "target": 105000.0, "stored": 38610.0, "demand": -66390.0, "pct": 36.77142857142857, "finish_forecast": "05/05", "poy": "FP82170R×2", "poy_days": 2.460426191449352, "spec": "150/48/2SDr", "note": "YKK", "days_active": 14}, {"machine": "T06 (A/L/L/R)", "batch": "2F6GT2", "status_text": "", "td_plan": 0, "td_actual": 6.8771808, "target": 0, "stored": 24915.0, "demand": 24915.0, "pct": 0, "finish_forecast": "---", "poy": "FP82170R×2", "poy_days": 2.267353506250701, "spec": "150/48/2SDr", "note": "", "days_active": 11}, {"machine": "A14 (B/R/A/L/B/A)", "batch": "2F43F1", "status_text": "nan", "td_plan": 2.0, "td_actual": 2.485085184, "target": 20000.0, "stored": 13950.0, "demand": -6050.0, "pct": 69.75, "finish_forecast": "---", "poy": "FP82658", "poy_days": 3.2143767350230195, "spec": "150/48SR6", "note": "AW10T", "days_active": 5}, {"machine": "T05 (A/L)", "batch": "停機", "status_text": "", "td_plan": 0, "td_actual": 0.0, "target": 0, "stored": 0.0, "demand": 0.0, "pct": 0, "finish_forecast": "---", "poy": "NAN", "poy_days": 999, "spec": "nan", "note": "", "days_active": 0}, {"machine": "T02 (B/R/A/L/L/R)", "batch": "2F6GV2", "status_text": "", "td_plan": 5.0, "td_actual": 6.5152718400000005, "target": 75000.0, "stored": 43065.0, "demand": -31935.0, "pct": 57.42, "finish_forecast": "04/29", "poy": "FP82168R×2", "poy_days": 3.659709154975182, "spec": "150/48/2SDr", "note": "YKK", "days_active": 9}, {"machine": "T05 (B/R/A/L/L)", "batch": "2F7D93", "status_text": "", "td_plan": 3.2, "td_actual": 3.5582976000000004, "target": 48000.0, "stored": 8580.0, "demand": -39420.0, "pct": 17.875, "finish_forecast": "---", "poy": "FP83023R×2", "poy_days": 1.8803935904630347, "spec": "225/72/2SDr", "note": "YKK小包A+AX", "days_active": 2}, {"machine": "A07 (A/A/L/B)", "batch": "2FA042", "status_text": "", "td_plan": 0.7, "td_actual": 0.9889173000000001, "target": 9100.0, "stored": 2400.0, "demand": -6700.0, "pct": 26.373626373626376, "finish_forecast": "04/30", "poy": "FP01422", "poy_days": 0.0, "spec": "75/72CE", "note": "AX同時倒筒+R, AL", "days_active": 6}, {"machine": "A13 (A/L/B/A)", "batch": "2FA052", "status_text": "", "td_plan": 1.3, "td_actual": 1.34286273, "target": 13000.0, "stored": 2880.0, "demand": -10120.0, "pct": 22.153846153846153, "finish_forecast": "05/02", "poy": "FP81858", "poy_days": 51.78191221376737, "spec": "75/72HC", "note": "Gloria,AW10T", "days_active": 6}, {"machine": "A15 (A/L/B)", "batch": "2F43G2", "status_text": "", "td_plan": 2.0, "td_actual": 0.8612956800000001, "target": 28000.0, "stored": 1500.0, "demand": -26500.0, "pct": 5.357142857142857, "finish_forecast": "05/11", "poy": "FP82781", "poy_days": 3.0140636488505312, "spec": "150/48HC", "note": "AW21T", "days_active": 5}, {"machine": "A20 (A/L)", "batch": "停機", "status_text": "", "td_plan": 0, "td_actual": 0.0, "target": 0, "stored": 0.0, "demand": 0.0, "pct": 0, "finish_forecast": "---", "poy": "NAN", "poy_days": 999, "spec": "nan", "note": "", "days_active": 0}, {"machine": "A16 (A/L)", "batch": "停機", "status_text": "", "td_plan": 0, "td_actual": 0.0, "target": 0, "stored": 0.0, "demand": 0.0, "pct": 0, "finish_forecast": "---", "poy": "NAN", "poy_days": 999, "spec": "nan", "note": "", "days_active": 0}, {"machine": "J08 (A/L/L/R)", "batch": "2F6GW2", "status_text": "", "td_plan": 0, "td_actual": 1.1267424, "target": 0, "stored": 3795.0, "demand": 3795.0, "pct": 0, "finish_forecast": "---", "poy": "FP82168R×2", "poy_days": 21.161891129685014, "spec": "150/48/2SDr", "note": "", "days_active": 2}, {"machine": "T03 (A/L/L)", "batch": "2F6GX1", "status_text": "", "td_plan": 0, "td_actual": 2.8194192000000005, "target": 0, "stored": 6600.0, "demand": 6600.0, "pct": 0, "finish_forecast": "---", "poy": "FP82167R×2", "poy_days": 4.317555899456171, "spec": "150/48/2SDR", "note": "", "days_active": 3}, {"machine": "T03 (A/L/L/R)", "batch": "2F6GY2", "status_text": "", "td_plan": 0, "td_actual": 3.02506776, "target": 0, "stored": 6750.0, "demand": 6750.0, "pct": 0, "finish_forecast": "---", "poy": "FP82167R×2", "poy_days": 4.024042092862078, "spec": "150/48/2SDR", "note": "", "days_active": 3}, {"machine": "A23 (A/L/A)", "batch": "2F43H1", "status_text": "", "td_plan": 0, "td_actual": 1.647622728, "target": 0, "stored": 1500.0, "demand": 1500.0, "pct": 0, "finish_forecast": "---", "poy": "FP82167R", "poy_days": 7.388220490728749, "spec": "150/48SDR", "note": "", "days_active": 2}, {"machine": "A23 (A/L/A)", "batch": "2F43I1", "status_text": "", "td_plan": 0, "td_actual": 1.6220762999999998, "target": 0, "stored": 2100.0, "demand": 2100.0, "pct": 0, "finish_forecast": "---", "poy": "FP82167R", "poy_days": 7.504579161905024, "spec": "150/48SDR", "note": "", "days_active": 2}, {"machine": "J07 (A/L)", "batch": "停機", "status_text": "", "td_plan": 0, "td_actual": 0.0, "target": 0, "stored": 0.0, "demand": 0.0, "pct": 0, "finish_forecast": "---", "poy": "NAN", "poy_days": 999, "spec": "nan", "note": "", "days_active": 0}, {"machine": "T05 (B/R/A/L/L)", "batch": "2F7E03", "status_text": "", "td_plan": 0, "td_actual": 3.170178, "target": 0, "stored": 4950.0, "demand": 4950.0, "pct": 0, "finish_forecast": "---", "poy": "FP83024R×2", "poy_days": 6.293022032201347, "spec": "225/72/2SDr", "note": "", "days_active": 2}, {"machine": "A19 (B/R/A/L)", "batch": "2F43J1", "status_text": "", "td_plan": 0, "td_actual": 0.0, "target": 0, "stored": 0.0, "demand": 0.0, "pct": 0, "finish_forecast": "---", "poy": "NAN", "poy_days": 999, "spec": "nan", "note": "", "days_active": 0}, {"machine": "T05 (B/R/A/L)", "batch": "2F6IA2", "status_text": "", "td_plan": 0, "td_actual": 0.0, "target": 0, "stored": 0.0, "demand": 0.0, "pct": 0, "finish_forecast": "---", "poy": "NAN", "poy_days": 999, "spec": "nan", "note": "", "days_active": 0}];
-        function renderTable() {
-            const tbody = document.getElementById('tableBody');
-            const search = document.getElementById('mainSearch').value.toLowerCase();
-            tbody.innerHTML = '';
-            const filtered = rawData.filter(d => `${d.machine} ${d.batch} ${d.spec} ${d.note}`.toLowerCase().includes(search));
-            filtered.forEach(d => {
-                const tr = document.createElement('tr');
-                if (d.td_actual === 0) tr.className = 'inactive';
-                const demandLabel = d.demand >= 0 ? '盈餘' : '缺';
-                const demandColor = d.demand >= 0 ? 'var(--success)' : '#64748b';
-                tr.innerHTML = `
-                    <td data-label="機台狀態"><div class="td-content"><span class="machine-tag">${d.machine}</span>${d.status_text ? `<div style="color:var(--danger); font-size:11px; font-weight:bold;">● ${d.status_text}</div>` : ''}</div></td>
-                    <td data-label="批號"><div class="td-content"><div style="font-weight:900;">${d.batch}</div><div style="font-size:11px; color:#94a3b8;">${d.note || ''}</div></div></td>
-                    <td data-label="規格"><div class="td-content">${d.spec}</div></td>
-                    <td data-label="日產"><div class="td-content"><div style="font-size:11px; color:#94a3b8;">計: ${d.td_plan.toFixed(2)}</div><div style="font-weight:bold; color:var(--accent);">實: ${d.td_actual.toFixed(2)}</div></div></td>
-                    <td data-label="生產天數"><div class="td-content">${d.days_active} 天</div></td>
-                    <td data-label="已繳庫量"><div class="td-content"><div style="font-weight:bold;">${Math.round(d.stored).toLocaleString()}</div><div class="progress-container"><div class="progress-fill" style="width:${d.pct}%"></div></div></div></td>
-                    <td data-label="預計完工"><div class="td-content"><span class="badge badge-success">${d.finish_forecast}</span><div style="font-size:10px; color:${demandColor};">${demandLabel}: ${Math.round(Math.abs(d.demand)).toLocaleString()}</div></div></td>
-                    <td data-label="POY預警"><div class="td-content"><div style="font-weight:bold; font-size:12px;">${d.poy}</div><div style="color:${d.poy_days < 3 ? 'var(--danger)' : (d.poy_days < 5 ? 'var(--warning)' : 'var(--success)')}; font-weight:bold;">${d.poy_days > 99 ? '---' : d.poy_days.toFixed(1) + ' 天'}</div></div></td>
-                `;
-                tbody.appendChild(tr);
-            });
+        const rawData = [{"machine": "A07", "dty_batch": "2FA042", "dty_std": "2FA042", "poy_list": [{"batch": "FP01422", "clean_id": "FP01422", "stock_a_a2": 0, "spec": "125d/72f CE", "history": "L52B CFF-M15+NBA0425278", "grades": "A+A2"}], "spec": "75/72CE", "days": 8, "last_status": "", "last_td": 1.1703096, "total_td": 8.3154168, "is_active": true, "last_date": "04/25", "stock": {"A": 3000, "AX": 1136, "B": 0, "C": 0}, "produced_sides": ["A", "B"], "current_sides": ["A", "B"], "avg_td": 1.0394271, "stock_summary": {"deposit": 4136, "total_deposit": 4136}}, {"machine": "A08", "dty_batch": "2FA032", "dty_std": "2FA032", "poy_list": [{"batch": "FP81386R", "clean_id": "FP81386R", "stock_a_a2": 44137.0, "spec": "125d/36f SDR2", "history": "L50 CFF-P03+CFF-M15", "grades": "A+A2"}], "spec": "75/36SDR", "days": 24, "last_status": "", "last_td": 1.8163828799999997, "total_td": 44.677290528, "is_active": true, "last_date": "04/25", "stock": {"A": 11790, "AX": 5037, "B": 0, "C": 0}, "produced_sides": ["A", "B"], "current_sides": ["A", "B"], "avg_td": 1.861553772, "stock_summary": {"deposit": 16827, "total_deposit": 16827}}, {"machine": "A08", "dty_batch": "2F08P2", "dty_std": "2F08P2", "poy_list": [{"batch": "FP80141", "clean_id": "FP80141", "stock_a_a2": 50441.0, "spec": "80d/72f BSD3", "history": "L57 CFF-2792", "grades": "A+A2"}], "spec": "50/72BSD3", "days": 0, "last_status": "", "last_td": 0, "total_td": 0, "is_active": false, "last_date": "04/01", "stock": {"A": 3384, "AX": 1165, "B": 0, "C": 0}, "produced_sides": ["A"], "current_sides": [], "avg_td": 0, "stock_summary": {"deposit": 4549, "total_deposit": 4549}}, {"machine": "A09", "dty_batch": "2F42S2", "dty_std": "2F42S2", "poy_list": [{"batch": "FP81363R×2", "clean_id": "FP81363R", "stock_a_a2": 7839.0, "spec": "125d/24f SDR", "history": "L53 CFF-282R", "grades": "A+A2"}], "spec": "75/24/2SDR2", "days": 22, "last_status": "半邊停/了機", "last_td": NaN, "total_td": 33.77265192000001, "is_active": true, "last_date": "04/25", "stock": {"A": 0, "AX": 2794, "B": 0, "C": 0}, "produced_sides": ["A", "B"], "current_sides": ["A", "B"], "avg_td": 1.5351205418181821, "stock_summary": {"deposit": 2794, "total_deposit": 2794}}, {"machine": "A09", "dty_batch": "2F42V1", "dty_std": "2F42V1", "poy_list": [{"batch": "FP81380R×2", "clean_id": "FP81380R", "stock_a_a2": 0, "spec": "125d/36f SDR", "history": "L50 CFF-282R", "grades": "A"}], "spec": "75/36/2SDRP", "days": 0, "last_status": "", "last_td": 0, "total_td": 0, "is_active": false, "last_date": "04/01", "stock": {"A": 6384, "AX": 877, "B": 0, "C": 0}, "produced_sides": ["B"], "current_sides": [], "avg_td": 0, "stock_summary": {"deposit": 7261, "total_deposit": 7261}}, {"machine": "A10", "dty_batch": "---", "dty_std": "__STATUS__", "poy_list": [], "spec": "---", "days": 0, "last_status": "停機", "last_td": NaN, "total_td": 0, "is_active": true, "last_date": "04/25", "stock": {"A": 0, "AX": 0, "B": 0, "C": 0}, "produced_sides": ["A", "B"], "current_sides": ["A", "B"], "avg_td": 0, "stock_summary": {"deposit": 0, "total_deposit": 0}}, {"machine": "A10", "dty_batch": "2F6GQ3", "dty_std": "2F6GQ3", "poy_list": [{"batch": "FP02420R×2", "clean_id": "FP02420R", "stock_a_a2": 0, "spec": "250d/48f FBKR", "history": "L52C CFF-280R+NE9NDA12020 5.8%", "grades": "A+A2"}], "spec": "150/48/2FBKR", "days": 10, "last_status": "", "last_td": 0, "total_td": 8.9586324, "is_active": false, "last_date": "04/16", "stock": {"A": 6990, "AX": 2644, "B": 0, "C": 0}, "produced_sides": ["A", "B"], "current_sides": [], "avg_td": 0.8958632400000001, "stock_summary": {"deposit": 9634, "total_deposit": 9634}}, {"machine": "A11", "dty_batch": "2F1YR2", "dty_std": "2F1YR2", "poy_list": [{"batch": "FP81857R", "clean_id": "FP81857R", "stock_a_a2": 27360.0, "spec": "125d/36f CDR", "history": "L54 CFF-253R", "grades": "A+A2"}], "spec": "75/36HC", "days": 25, "last_status": "", "last_td": 1.2972441600000002, "total_td": 32.870311920000006, "is_active": true, "last_date": "04/25", "stock": {"A": 31848, "AX": 7143, "B": 0, "C": 0}, "produced_sides": ["A", "B"], "current_sides": ["A", "B"], "avg_td": 1.3148124768000002, "stock_summary": {"deposit": 38991, "total_deposit": 38991}}, {"machine": "A12", "dty_batch": "2F42T2", "dty_std": "2F42T2", "poy_list": [{"batch": "FP81363R×2", "clean_id": "FP81363R", "stock_a_a2": 7839.0, "spec": "125d/24f SDR", "history": "L53 CFF-282R", "grades": "A+A2"}], "spec": "75/24/2SDR2", "days": 25, "last_status": "", "last_td": 1.5707865599999997, "total_td": 39.781249200000005, "is_active": true, "last_date": "04/25", "stock": {"A": 0, "AX": 4177, "B": 0, "C": 0}, "produced_sides": ["A", "B"], "current_sides": ["A", "B"], "avg_td": 1.5912499680000003, "stock_summary": {"deposit": 4177, "total_deposit": 4177}}, {"machine": "A13", "dty_batch": "2FA052", "dty_std": "2FA052", "poy_list": [{"batch": "FP81858", "clean_id": "FP81858", "stock_a_a2": 69536.0, "spec": "125d/72f HC", "history": "L54 CFF-253R", "grades": "A+A2"}], "spec": "75/72HC", "days": 8, "last_status": "", "last_td": 1.3377117599999997, "total_td": 10.72241874, "is_active": true, "last_date": "04/25", "stock": {"A": 6360, "AX": 599, "B": 0, "C": 0}, "produced_sides": ["A", "B"], "current_sides": ["A", "B"], "avg_td": 1.3403023425, "stock_summary": {"deposit": 6959, "total_deposit": 6959}}, {"machine": "A14", "dty_batch": "---", "dty_std": "__STATUS__", "poy_list": [], "spec": "---", "days": 0, "last_status": "停機", "last_td": NaN, "total_td": 0, "is_active": true, "last_date": "04/25", "stock": {"A": 0, "AX": 0, "B": 0, "C": 0}, "produced_sides": ["A", "B"], "current_sides": ["A", "B"], "avg_td": 0, "stock_summary": {"deposit": 0, "total_deposit": 0}}, {"machine": "A14", "dty_batch": "2F43D2", "dty_std": "2F43D2", "poy_list": [{"batch": "FP82778", "clean_id": "FP82778", "stock_a_a2": 0, "spec": "250d/48f HC", "history": "L54 CFF-253R", "grades": "A+A2"}], "spec": "150/48CDR", "days": 3, "last_status": "", "last_td": 0, "total_td": 10.20941712, "is_active": false, "last_date": "04/14", "stock": {"A": 2130, "AX": 1105, "B": 0, "C": 0}, "produced_sides": ["A", "B"], "current_sides": [], "avg_td": 3.4031390399999997, "stock_summary": {"deposit": 3235, "total_deposit": 3235}}, {"machine": "A14", "dty_batch": "2F43F1", "dty_std": "2F43F1", "poy_list": [{"batch": "FP82658", "clean_id": "FP82658", "stock_a_a2": 7988.0, "spec": "255d/48f SR6", "history": "L56 CFF-226", "grades": "A+A2"}], "spec": "150/48SR6", "days": 5, "last_status": "", "last_td": 0, "total_td": 12.42542592, "is_active": false, "last_date": "04/20", "stock": {"A": 13950, "AX": 2076, "B": 0, "C": 0}, "produced_sides": ["A", "B"], "current_sides": [], "avg_td": 2.485085184, "stock_summary": {"deposit": 16026, "total_deposit": 16026}}, {"machine": "A15", "dty_batch": "2F43G2", "dty_std": "2F43G2", "poy_list": [{"batch": "FP82781", "clean_id": "FP82781", "stock_a_a2": 2596.0, "spec": "250d/48f HC", "history": "L54 CFF-253R", "grades": "A+A2"}], "spec": "150/48HC", "days": 7, "last_status": "半邊停/了機", "last_td": 1.49651712, "total_td": 7.2784353600000005, "is_active": true, "last_date": "04/25", "stock": {"A": 5250, "AX": 0, "B": 0, "C": 0}, "produced_sides": ["A", "B"], "current_sides": ["A", "B"], "avg_td": 1.03977648, "stock_summary": {"deposit": 5250, "total_deposit": 5250}}, {"machine": "A16", "dty_batch": "---", "dty_std": "__STATUS__", "poy_list": [], "spec": "---", "days": 0, "last_status": "停機", "last_td": NaN, "total_td": 0, "is_active": true, "last_date": "04/25", "stock": {"A": 0, "AX": 0, "B": 0, "C": 0}, "produced_sides": ["A", "B"], "current_sides": ["A", "B"], "avg_td": 0, "stock_summary": {"deposit": 0, "total_deposit": 0}}, {"machine": "A16", "dty_batch": "2F1YX2", "dty_std": "2F1YX2", "poy_list": [{"batch": "FP81362R", "clean_id": "FP81362R", "stock_a_a2": 0, "spec": "120d/72f SDR", "history": "L51 CFF-282R", "grades": "A+A2"}], "spec": "75/72SDR", "days": 14, "last_status": "", "last_td": 0, "total_td": 26.874578057142855, "is_active": false, "last_date": "04/18", "stock": {"A": 41010, "AX": 3612, "B": 0, "C": 0}, "produced_sides": ["A", "B"], "current_sides": [], "avg_td": 1.9196127183673468, "stock_summary": {"deposit": 44622, "total_deposit": 44622}}, {"machine": "A17", "dty_batch": "---", "dty_std": "__STATUS__", "poy_list": [], "spec": "---", "days": 0, "last_status": "停機", "last_td": NaN, "total_td": 0, "is_active": true, "last_date": "04/25", "stock": {"A": 0, "AX": 0, "B": 0, "C": 0}, "produced_sides": ["A", "B"], "current_sides": ["A", "B"], "avg_td": 0, "stock_summary": {"deposit": 0, "total_deposit": 0}}, {"machine": "A17", "dty_batch": "2F08Q2", "dty_std": "2F08Q2", "poy_list": [{"batch": "FP80139", "clean_id": "FP80139", "stock_a_a2": 0, "spec": "80d/72f SD", "history": "L57 CFF-M15", "grades": "A+A2"}], "spec": "50/72F2FC", "days": 0, "last_status": "", "last_td": 0, "total_td": 0, "is_active": false, "last_date": "04/01", "stock": {"A": 168, "AX": 301, "B": 0, "C": 0}, "produced_sides": ["A"], "current_sides": [], "avg_td": 0, "stock_summary": {"deposit": 469, "total_deposit": 469}}, {"machine": "A17", "dty_batch": "2F1YT1", "dty_std": "2F1YT1", "poy_list": [{"batch": "FP11914R", "clean_id": "FP11914R", "stock_a_a2": 0, "spec": "120d/144f SDR", "history": "FEPV", "grades": "A"}], "spec": "75/144SDR", "days": 1, "last_status": "", "last_td": 0, "total_td": 0.6038712, "is_active": false, "last_date": "04/02", "stock": {"A": 43126, "AX": 3450, "B": 0, "C": 0}, "produced_sides": ["A", "B"], "current_sides": [], "avg_td": 0.6038712, "stock_summary": {"deposit": 46576, "total_deposit": 46576}}, {"machine": "A18", "dty_batch": "2F43K2", "dty_std": "2F43K2", "poy_list": [], "spec": "nan", "days": 0, "last_status": "", "last_td": NaN, "total_td": 0, "is_active": true, "last_date": "04/25", "stock": {"A": 0, "AX": 0, "B": 0, "C": 0}, "produced_sides": ["A", "B"], "current_sides": ["A", "B"], "avg_td": 0, "stock_summary": {"deposit": 0, "total_deposit": 0}}, {"machine": "A18", "dty_batch": "2F42M2", "dty_std": "2F42M2", "poy_list": [{"batch": "FP81364R×2", "clean_id": "FP81364R", "stock_a_a2": 4560.0, "spec": "125d/24f SDR", "history": "L50 CFF-282R", "grades": "A+A2"}], "spec": "75/24/2SDR1", "days": 23, "last_status": "", "last_td": 0, "total_td": 37.79860896, "is_active": false, "last_date": "04/23", "stock": {"A": 0, "AX": 8512, "B": 0, "C": 0}, "produced_sides": ["A", "B"], "current_sides": [], "avg_td": 1.6434177808695654, "stock_summary": {"deposit": 8512, "total_deposit": 8512}}, {"machine": "A19", "dty_batch": "2F43J1", "dty_std": "2F43J1", "poy_list": [], "spec": "nan", "days": 0, "last_status": "半邊停/了機", "last_td": NaN, "total_td": 0, "is_active": true, "last_date": "04/25", "stock": {"A": 2850, "AX": 0, "B": 0, "C": 0}, "produced_sides": ["A", "B"], "current_sides": ["A", "B"], "avg_td": 0, "stock_summary": {"deposit": 2850, "total_deposit": 2850}}, {"machine": "A19", "dty_batch": "2F42L2", "dty_std": "2F42L2", "poy_list": [{"batch": "FP82162R", "clean_id": "FP82162R", "stock_a_a2": 0, "spec": "255d/48f SDR", "history": "L50 CFF-282R", "grades": "A"}], "spec": "150/48SDR", "days": 4, "last_status": "", "last_td": 0, "total_td": 6.48348948, "is_active": false, "last_date": "04/05", "stock": {"A": 21420, "AX": 2055, "B": 0, "C": 0}, "produced_sides": ["A"], "current_sides": [], "avg_td": 1.62087237, "stock_summary": {"deposit": 23475, "total_deposit": 23475}}, {"machine": "A19", "dty_batch": "2F42Y1", "dty_std": "2F42Y1", "poy_list": [{"batch": "FP82163R", "clean_id": "FP82163R", "stock_a_a2": 0, "spec": "255d/48f SDR", "history": "L48 CFF-282R", "grades": "A+A2"}], "spec": "150/48SDR", "days": 10, "last_status": "", "last_td": 0, "total_td": 14.74879536, "is_active": false, "last_date": "04/13", "stock": {"A": 16260, "AX": 1254, "B": 0, "C": 0}, "produced_sides": ["B"], "current_sides": [], "avg_td": 1.474879536, "stock_summary": {"deposit": 17514, "total_deposit": 17514}}, {"machine": "A19", "dty_batch": "2F43B1", "dty_std": "2F43B1", "poy_list": [{"batch": "FP82166R", "clean_id": "FP82166R", "stock_a_a2": 0, "spec": "255d/48f SDR2", "history": "L48 CFF-P03", "grades": "A+A2"}], "spec": "150/48SDr", "days": 16, "last_status": "", "last_td": 0, "total_td": 24.630301799999998, "is_active": false, "last_date": "04/23", "stock": {"A": 21450, "AX": 2573, "B": 0, "C": 0}, "produced_sides": ["A", "B"], "current_sides": [], "avg_td": 1.5393938624999999, "stock_summary": {"deposit": 24023, "total_deposit": 24023}}, {"machine": "A20", "dty_batch": "---", "dty_std": "__STATUS__", "poy_list": [], "spec": "---", "days": 0, "last_status": "停機", "last_td": NaN, "total_td": 0, "is_active": true, "last_date": "04/25", "stock": {"A": 0, "AX": 0, "B": 0, "C": 0}, "produced_sides": ["A", "B"], "current_sides": ["A", "B"], "avg_td": 0, "stock_summary": {"deposit": 0, "total_deposit": 0}}, {"machine": "A20", "dty_batch": "2F29H2", "dty_std": "2F29H2", "poy_list": [{"batch": "FP81385R", "clean_id": "FP81385R", "stock_a_a2": 1970.0, "spec": "165d/72f PFR", "history": "L49 CFF-287R-S", "grades": "A+A2"}], "spec": "100/72PFR", "days": 14, "last_status": "", "last_td": 0, "total_td": 30.506182848, "is_active": false, "last_date": "04/17", "stock": {"A": 8304, "AX": 0, "B": 0, "C": 0}, "produced_sides": ["A", "B"], "current_sides": [], "avg_td": 2.1790130605714286, "stock_summary": {"deposit": 8304, "total_deposit": 8304}}, {"machine": "A21", "dty_batch": "2F29I1", "dty_std": "2F29I1", "poy_list": [{"batch": "FP81384R", "clean_id": "FP81384R", "stock_a_a2": 18618.0, "spec": "170d/36f SDR2", "history": "L50 CFF-P03+CFF-M15", "grades": "A+A2"}], "spec": "100/36SDr", "days": 17, "last_status": "", "last_td": 1.97568, "total_td": 33.90295104, "is_active": true, "last_date": "04/25", "stock": {"A": 30900, "AX": 2127, "B": 0, "C": 0}, "produced_sides": ["A", "B"], "current_sides": ["A", "B"], "avg_td": 1.9942912376470587, "stock_summary": {"deposit": 33027, "total_deposit": 33027}}, {"machine": "A21", "dty_batch": "2F29B1", "dty_std": "2F29B1", "poy_list": [{"batch": "FP81368R", "clean_id": "FP81368R", "stock_a_a2": 3420.0, "spec": "170d/36f SDR", "history": "L50 CFF-282R", "grades": "A"}], "spec": "100/36SDR", "days": 1, "last_status": "", "last_td": 0, "total_td": 0.9486288, "is_active": false, "last_date": "04/04", "stock": {"A": 0, "AX": 6744, "B": 0, "C": 0}, "produced_sides": ["A"], "current_sides": [], "avg_td": 0.9486288, "stock_summary": {"deposit": 6744, "total_deposit": 6744}}, {"machine": "A21", "dty_batch": "2F29G1", "dty_std": "2F29G1", "poy_list": [{"batch": "FP81384R", "clean_id": "FP81384R", "stock_a_a2": 18618.0, "spec": "170d/36f SDR2", "history": "L50 CFF-P03+CFF-M15", "grades": "A+A2"}], "spec": "100/36SDR", "days": 6, "last_status": "", "last_td": 0, "total_td": 5.9926608, "is_active": false, "last_date": "04/06", "stock": {"A": 3990, "AX": 835, "B": 0, "C": 0}, "produced_sides": ["A", "B"], "current_sides": [], "avg_td": 0.9987768, "stock_summary": {"deposit": 4825, "total_deposit": 4825}}, {"machine": "A22", "dty_batch": "---", "dty_std": "__STATUS__", "poy_list": [], "spec": "---", "days": 0, "last_status": "停機", "last_td": NaN, "total_td": 0, "is_active": true, "last_date": "04/25", "stock": {"A": 0, "AX": 0, "B": 0, "C": 0}, "produced_sides": ["A", "B"], "current_sides": ["A", "B"], "avg_td": 0, "stock_summary": {"deposit": 0, "total_deposit": 0}}, {"machine": "A22", "dty_batch": "2F1YW1", "dty_std": "2F1YW1", "poy_list": [{"batch": "FP11914R", "clean_id": "FP11914R", "stock_a_a2": 0, "spec": "120d/144f SDR", "history": "FEPV", "grades": "A"}], "spec": "75/144SDR", "days": 4, "last_status": "", "last_td": 0, "total_td": 2.1900834000000002, "is_active": false, "last_date": "04/08", "stock": {"A": 14112, "AX": 1654, "B": 0, "C": 0}, "produced_sides": ["A", "B"], "current_sides": [], "avg_td": 0.5475208500000001, "stock_summary": {"deposit": 15766, "total_deposit": 15766}}, {"machine": "A23", "dty_batch": "2F43H1", "dty_std": "2F43H1", "poy_list": [{"batch": "FP82167R", "clean_id": "FP82167R", "stock_a_a2": 12173.0, "spec": "255d/48f SDR", "history": "L48 CFF-282R", "grades": "A+A2"}], "spec": "150/48SDR", "days": 4, "last_status": "", "last_td": 1.565754624, "total_td": 6.441458256000001, "is_active": true, "last_date": "04/25", "stock": {"A": 6000, "AX": 0, "B": 0, "C": 0}, "produced_sides": ["A"], "current_sides": ["A"], "avg_td": 1.6103645640000002, "stock_summary": {"deposit": 6000, "total_deposit": 6000}}, {"machine": "A23", "dty_batch": "2F43I1", "dty_std": "2F43I1", "poy_list": [{"batch": "FP82167R", "clean_id": "FP82167R", "stock_a_a2": 12173.0, "spec": "255d/48f SDR", "history": "L48 CFF-282R", "grades": "A+A2"}], "spec": "150/48SDR", "days": 4, "last_status": "", "last_td": 1.6287523200000005, "total_td": 6.4870416, "is_active": true, "last_date": "04/25", "stock": {"A": 6450, "AX": 0, "B": 0, "C": 0}, "produced_sides": ["B"], "current_sides": ["B"], "avg_td": 1.6217604, "stock_summary": {"deposit": 6450, "total_deposit": 6450}}, {"machine": "A23", "dty_batch": "2F42Q1", "dty_std": "2F42Q1", "poy_list": [{"batch": "FP82163R", "clean_id": "FP82163R", "stock_a_a2": 0, "spec": "255d/48f SDR", "history": "L48 CFF-282R", "grades": "A+A2"}], "spec": "150/48SDR", "days": 0, "last_status": "", "last_td": 0, "total_td": 0, "is_active": false, "last_date": "04/01", "stock": {"A": 0, "AX": 0, "B": 0, "C": 0}, "produced_sides": ["A", "B"], "current_sides": [], "avg_td": 0, "stock_summary": {"deposit": 0, "total_deposit": 0}}, {"machine": "A23", "dty_batch": "2F43A1", "dty_std": "2F43A1", "poy_list": [{"batch": "FP82166R", "clean_id": "FP82166R", "stock_a_a2": 0, "spec": "255d/48f SDR2", "history": "L48 CFF-P03", "grades": "A+A2"}], "spec": "150/48SDR", "days": 17, "last_status": "", "last_td": 0, "total_td": 51.99052975199999, "is_active": false, "last_date": "04/20", "stock": {"A": 48030, "AX": 4314, "B": 0, "C": 0}, "produced_sides": ["A", "B"], "current_sides": [], "avg_td": 3.0582664559999997, "stock_summary": {"deposit": 52344, "total_deposit": 52344}}, {"machine": "A24", "dty_batch": "---", "dty_std": "__STATUS__", "poy_list": [], "spec": "---", "days": 0, "last_status": "停機", "last_td": NaN, "total_td": 0, "is_active": true, "last_date": "04/25", "stock": {"A": 0, "AX": 0, "B": 0, "C": 0}, "produced_sides": ["A", "B"], "current_sides": ["A", "B"], "avg_td": 0, "stock_summary": {"deposit": 0, "total_deposit": 0}}, {"machine": "J07", "dty_batch": "---", "dty_std": "__STATUS__", "poy_list": [], "spec": "---", "days": 0, "last_status": "停機", "last_td": NaN, "total_td": 0, "is_active": true, "last_date": "04/25", "stock": {"A": 0, "AX": 0, "B": 0, "C": 0}, "produced_sides": ["L", "R"], "current_sides": ["L", "R"], "avg_td": 0, "stock_summary": {"deposit": 0, "total_deposit": 0}}, {"machine": "J07", "dty_batch": "2F6FU2", "dty_std": "2F6FU2", "poy_list": [{"batch": "FP82155R×2", "clean_id": "FP82155R", "stock_a_a2": 0, "spec": "255d/48f SDR", "history": "L55B CFF-M15+CFS-289R", "grades": "A+A2"}], "spec": "150/48/2SDR2", "days": 16, "last_status": "", "last_td": 0, "total_td": 46.990523519999996, "is_active": false, "last_date": "04/20", "stock": {"A": 825, "AX": 10155, "B": 0, "C": 0}, "produced_sides": ["L", "R"], "current_sides": [], "avg_td": 2.9369077199999998, "stock_summary": {"deposit": 10980, "total_deposit": 10980}}, {"machine": "J08", "dty_batch": "2F6GW2", "dty_std": "2F6GW2", "poy_list": [{"batch": "FP82168R×2", "clean_id": "FP82168R", "stock_a_a2": 23844.0, "spec": "255d/48f SDR", "history": "L55B CFF-230+CFS-289R", "grades": "A+A2"}], "spec": "150/48/2SDr", "days": 4, "last_status": "", "last_td": 4.7112191999999995, "total_td": 11.666073599999999, "is_active": true, "last_date": "04/25", "stock": {"A": 0, "AX": 1567, "B": 0, "C": 0}, "produced_sides": ["L", "R"], "current_sides": ["L", "R"], "avg_td": 2.9165183999999997, "stock_summary": {"deposit": 1567, "total_deposit": 1567}}, {"machine": "J09", "dty_batch": "---", "dty_std": "__STATUS__", "poy_list": [], "spec": "---", "days": 0, "last_status": "停機", "last_td": NaN, "total_td": 0, "is_active": true, "last_date": "04/25", "stock": {"A": 0, "AX": 0, "B": 0, "C": 0}, "produced_sides": ["L", "R"], "current_sides": ["L", "R"], "avg_td": 0, "stock_summary": {"deposit": 0, "total_deposit": 0}}, {"machine": "T01", "dty_batch": "2F6GU2", "dty_std": "2F6GU2", "poy_list": [{"batch": "FP82170R×2", "clean_id": "FP82170R", "stock_a_a2": 15593.0, "spec": "255d/48f SDR", "history": "L56 CFF-230+CFS-289R", "grades": "A+A2"}], "spec": "150/48/2SDr", "days": 16, "last_status": "", "last_td": 6.528211199999999, "total_td": 101.47718447999999, "is_active": true, "last_date": "04/25", "stock": {"A": 0, "AX": 2343, "B": 0, "C": 0}, "produced_sides": ["L", "R"], "current_sides": ["L", "R"], "avg_td": 6.3423240299999994, "stock_summary": {"deposit": 2343, "total_deposit": 2343}}, {"machine": "T01", "dty_batch": "2F6GH2", "dty_std": "2F6GH2", "poy_list": [{"batch": "FP82156R×2", "clean_id": "FP82156R", "stock_a_a2": 0, "spec": "255d/48f SDR", "history": "L55A CFF-M15+CFS-289R", "grades": "A+A2"}], "spec": "150/48/2SDR1", "days": 1, "last_status": "", "last_td": 0, "total_td": 6.197990400000001, "is_active": false, "last_date": "04/03", "stock": {"A": 0, "AX": 0, "B": 0, "C": 0}, "produced_sides": ["L", "R"], "current_sides": [], "avg_td": 6.197990400000001, "stock_summary": {"deposit": 0, "total_deposit": 0}}, {"machine": "T02", "dty_batch": "2F6GV2", "dty_std": "2F6GV2", "poy_list": [{"batch": "FP82168R×2", "clean_id": "FP82168R", "stock_a_a2": 23844.0, "spec": "255d/48f SDR", "history": "L55B CFF-230+CFS-289R", "grades": "A+A2"}], "spec": "150/48/2SDr", "days": 11, "last_status": "", "last_td": 6.6322368, "total_td": 71.80938576000001, "is_active": true, "last_date": "04/25", "stock": {"A": 0, "AX": 3141, "B": 0, "C": 0}, "produced_sides": ["L", "R"], "current_sides": ["L", "R"], "avg_td": 6.528125978181819, "stock_summary": {"deposit": 3141, "total_deposit": 3141}}, {"machine": "T02", "dty_batch": "2F6FV2", "dty_std": "2F6FV2", "poy_list": [{"batch": "FP82155R×2", "clean_id": "FP82155R", "stock_a_a2": 0, "spec": "255d/48f SDR", "history": "L55B CFF-M15+CFS-289R", "grades": "A+A2"}], "spec": "150/48/2SDR2", "days": 13, "last_status": "", "last_td": 0, "total_td": 78.41926872, "is_active": false, "last_date": "04/13", "stock": {"A": 660, "AX": 1482, "B": 0, "C": 0}, "produced_sides": ["L", "R"], "current_sides": [], "avg_td": 6.0322514400000005, "stock_summary": {"deposit": 2142, "total_deposit": 2142}}, {"machine": "T03", "dty_batch": "2F6GX1", "dty_std": "2F6GX1", "poy_list": [{"batch": "FP82167R×2", "clean_id": "FP82167R", "stock_a_a2": 12173.0, "spec": "255d/48f SDR", "history": "L48 CFF-282R", "grades": "A+A2"}], "spec": "150/48/2SDR", "days": 5, "last_status": "", "last_td": 3.077568, "total_td": 14.214096, "is_active": true, "last_date": "04/25", "stock": {"A": 14550, "AX": 703, "B": 0, "C": 0}, "produced_sides": ["L"], "current_sides": ["L"], "avg_td": 2.8428192, "stock_summary": {"deposit": 15253, "total_deposit": 15253}}, {"machine": "T03", "dty_batch": "2F6GY2", "dty_std": "2F6GY2", "poy_list": [{"batch": "FP82167R×2", "clean_id": "FP82167R", "stock_a_a2": 12173.0, "spec": "255d/48f SDR", "history": "L48 CFF-282R", "grades": "A+A2"}], "spec": "150/48/2SDR", "days": 5, "last_status": "", "last_td": 3.1820256, "total_td": 15.05961288, "is_active": true, "last_date": "04/25", "stock": {"A": 14700, "AX": 682, "B": 0, "C": 0}, "produced_sides": ["R"], "current_sides": ["R"], "avg_td": 3.011922576, "stock_summary": {"deposit": 15382, "total_deposit": 15382}}, {"machine": "T03", "dty_batch": "2F6GP1", "dty_std": "2F6GP1", "poy_list": [{"batch": "FP82163R×2", "clean_id": "FP82163R", "stock_a_a2": 0, "spec": "255d/48f SDR", "history": "L48 CFF-282R", "grades": "A+A2"}], "spec": "150/48/2SDR", "days": 4, "last_status": "", "last_td": 0, "total_td": 13.3966224, "is_active": false, "last_date": "04/06", "stock": {"A": 9060, "AX": 3411, "B": 0, "C": 0}, "produced_sides": ["L"], "current_sides": [], "avg_td": 3.3491556, "stock_summary": {"deposit": 12471, "total_deposit": 12471}}, {"machine": "T03", "dty_batch": "2F6GN2", "dty_std": "2F6GN2", "poy_list": [{"batch": "FP82163R×2", "clean_id": "FP82163R", "stock_a_a2": 0, "spec": "255d/48f SDR", "history": "L48 CFF-282R", "grades": "A+A2"}], "spec": "150/48/2SDR", "days": 4, "last_status": "", "last_td": 0, "total_td": 13.806676800000002, "is_active": false, "last_date": "04/06", "stock": {"A": 33570, "AX": 3940, "B": 0, "C": 0}, "produced_sides": ["R"], "current_sides": [], "avg_td": 3.4516692000000004, "stock_summary": {"deposit": 37510, "total_deposit": 37510}}, {"machine": "T03", "dty_batch": "2F6GS1", "dty_std": "2F6GS1", "poy_list": [{"batch": "FP82166R×2", "clean_id": "FP82166R", "stock_a_a2": 0, "spec": "255d/48f SDR2", "history": "L48 CFF-P03", "grades": "A+A2"}], "spec": "150/48/2SDR", "days": 10, "last_status": "", "last_td": 0, "total_td": 27.94635, "is_active": false, "last_date": "04/19", "stock": {"A": 25830, "AX": 2512, "B": 0, "C": 0}, "produced_sides": ["L"], "current_sides": [], "avg_td": 2.794635, "stock_summary": {"deposit": 28342, "total_deposit": 28342}}, {"machine": "T03", "dty_batch": "2F6GR2", "dty_std": "2F6GR2", "poy_list": [{"batch": "FP82166R×2", "clean_id": "FP82166R", "stock_a_a2": 0, "spec": "255d/48f SDR2", "history": "L48 CFF-P03", "grades": "A+A2"}], "spec": "150/48/2SDR", "days": 10, "last_status": "", "last_td": 0, "total_td": 26.6487624, "is_active": false, "last_date": "04/19", "stock": {"A": 22200, "AX": 3242, "B": 0, "C": 0}, "produced_sides": ["R"], "current_sides": [], "avg_td": 2.66487624, "stock_summary": {"deposit": 25442, "total_deposit": 25442}}, {"machine": "T04", "dty_batch": "2F43C2", "dty_std": "2F43C2", "poy_list": [{"batch": "FP11915R×2", "clean_id": "FP11915R", "stock_a_a2": 885.0, "spec": "120d/72f SDR", "history": "FEPV", "grades": "A+A2"}], "spec": "75/72/2SDR", "days": 15, "last_status": "半邊停/了機", "last_td": NaN, "total_td": 36.12266928, "is_active": true, "last_date": "04/25", "stock": {"A": 18600, "AX": 1401, "B": 0, "C": 0}, "produced_sides": ["L", "R"], "current_sides": ["L", "R"], "avg_td": 2.408177952, "stock_summary": {"deposit": 20001, "total_deposit": 20001}}, {"machine": "T04", "dty_batch": "2F42U2", "dty_std": "2F42U2", "poy_list": [{"batch": "FP81365R×2", "clean_id": "FP81365R", "stock_a_a2": 12713.0, "spec": "120d/72f PDR", "history": "L52D CFF-M15+CFS-289R", "grades": "A+A2"}], "spec": "75/72/2PDR", "days": 3, "last_status": "", "last_td": 0, "total_td": 4.1496624, "is_active": false, "last_date": "04/06", "stock": {"A": 20088, "AX": 2627, "B": 0, "C": 0}, "produced_sides": ["L"], "current_sides": [], "avg_td": 1.3832208000000001, "stock_summary": {"deposit": 22715, "total_deposit": 22715}}, {"machine": "T04", "dty_batch": "2F42Z2", "dty_std": "2F42Z2", "poy_list": [{"batch": "FP81383R×2", "clean_id": "FP81383R", "stock_a_a2": 0, "spec": "130d/72f SDR", "history": "L48 CFF-282R", "grades": "A+A2"}], "spec": "75/72/2SDR", "days": 3, "last_status": "", "last_td": 0, "total_td": 4.8349548, "is_active": false, "last_date": "04/07", "stock": {"A": 10290, "AX": 633, "B": 0, "C": 0}, "produced_sides": ["R"], "current_sides": [], "avg_td": 1.6116516, "stock_summary": {"deposit": 10923, "total_deposit": 10923}}, {"machine": "T04", "dty_batch": "2F9UY2", "dty_std": "2F9UY2", "poy_list": [], "spec": "nan", "days": 0, "last_status": "", "last_td": 0, "total_td": 0, "is_active": false, "last_date": "04/12", "stock": {"A": 150, "AX": 542, "B": 0, "C": 0}, "produced_sides": ["R"], "current_sides": [], "avg_td": 0, "stock_summary": {"deposit": 692, "total_deposit": 692}}, {"machine": "T05", "dty_batch": "2F7E03", "dty_std": "2F7E03", "poy_list": [{"batch": "FP83024R×2", "clean_id": "FP83024R", "stock_a_a2": 19950.0, "spec": "340d/72f SDR2", "history": "L53 CFF-P03+CFF-M15", "grades": "A"}], "spec": "225/72/2SDr", "days": 4, "last_status": "", "last_td": 2.943864, "total_td": 11.954012399999998, "is_active": true, "last_date": "04/25", "stock": {"A": 0, "AX": 778, "B": 0, "C": 0}, "produced_sides": ["L", "R"], "current_sides": ["L"], "avg_td": 2.9885030999999995, "stock_summary": {"deposit": 778, "total_deposit": 778}}, {"machine": "T05", "dty_batch": "2F6IA2", "dty_std": "2F6IA2", "poy_list": [], "spec": "nan", "days": 0, "last_status": "", "last_td": NaN, "total_td": 0, "is_active": true, "last_date": "04/25", "stock": {"A": 0, "AX": 0, "B": 0, "C": 0}, "produced_sides": ["R"], "current_sides": ["R"], "avg_td": 0, "stock_summary": {"deposit": 0, "total_deposit": 0}}, {"machine": "T05", "dty_batch": "2F6GM1", "dty_std": "2F6GM1", "poy_list": [{"batch": "FP82163R×2", "clean_id": "FP82163R", "stock_a_a2": 0, "spec": "255d/48f SDR", "history": "L48 CFF-282R", "grades": "A+A2"}], "spec": "150/48/2SDR", "days": 11, "last_status": "", "last_td": 0, "total_td": 35.203896, "is_active": false, "last_date": "04/12", "stock": {"A": 0, "AX": 2996, "B": 0, "C": 0}, "produced_sides": ["L", "R"], "current_sides": [], "avg_td": 3.2003541818181818, "stock_summary": {"deposit": 2996, "total_deposit": 2996}}, {"machine": "T05", "dty_batch": "2F7D93", "dty_std": "2F7D93", "poy_list": [{"batch": "FP83023R×2", "clean_id": "FP83023R", "stock_a_a2": 6691.0, "spec": "340d/72f SDR", "history": "L53 CFF-282R", "grades": "A+A2"}], "spec": "225/72/2SDr", "days": 2, "last_status": "", "last_td": 0, "total_td": 7.116595200000001, "is_active": false, "last_date": "04/19", "stock": {"A": 0, "AX": 1390, "B": 0, "C": 0}, "produced_sides": ["L", "R"], "current_sides": [], "avg_td": 3.5582976000000004, "stock_summary": {"deposit": 1390, "total_deposit": 1390}}, {"machine": "T06", "dty_batch": "2F6GT2", "dty_std": "2F6GT2", "poy_list": [{"batch": "FP82170R×2", "clean_id": "FP82170R", "stock_a_a2": 15593.0, "spec": "255d/48f SDR", "history": "L56 CFF-230+CFS-289R", "grades": "A+A2"}], "spec": "150/48/2SDr", "days": 13, "last_status": "", "last_td": 6.7531968, "total_td": 89.24579999999999, "is_active": true, "last_date": "04/25", "stock": {"A": 0, "AX": 4613, "B": 0, "C": 0}, "produced_sides": ["L", "R"], "current_sides": ["L", "R"], "avg_td": 6.865061538461537, "stock_summary": {"deposit": 4613, "total_deposit": 4613}}, {"machine": "T06", "dty_batch": "2FA023", "dty_std": "2FA023", "poy_list": [{"batch": "FP81365R", "clean_id": "FP81365R", "stock_a_a2": 12713.0, "spec": "120d/72f PDR", "history": "L52D CFF-M15+CFS-289R", "grades": "A+A2"}], "spec": "75/72PDR", "days": 5, "last_status": "", "last_td": 0, "total_td": 8.1679104, "is_active": false, "last_date": "04/05", "stock": {"A": 1620, "AX": 522, "B": 0, "C": 0}, "produced_sides": ["L", "R"], "current_sides": [], "avg_td": 1.63358208, "stock_summary": {"deposit": 2142, "total_deposit": 2142}}];
+        const poyAnalysis = {"FP81386R": {"machines": ["A08"], "total_avg_td": 1.861553772, "stock_a_a2": 44137.0, "spec": "125d/36f SDR2", "support_days": 23.709763673697417, "machines_text": "A08"}, "FP81363R": {"machines": ["A09", "A12"], "total_avg_td": 3.1263705098181824, "stock_a_a2": 7839.0, "spec": "125d/24f SDR", "support_days": 2.5073803553936047, "machines_text": "A09, A12"}, "FP81857R": {"machines": ["A11"], "total_avg_td": 1.3148124768000002, "stock_a_a2": 27360.0, "spec": "125d/36f CDR", "support_days": 20.809051087337533, "machines_text": "A11"}, "FP81384R": {"machines": ["A21"], "total_avg_td": 1.9942912376470587, "stock_a_a2": 18618.0, "spec": "170d/36f SDR2", "support_days": 9.33564749648413, "machines_text": "A21"}, "FP11915R": {"machines": ["T04"], "total_avg_td": 2.408177952, "stock_a_a2": 885.0, "spec": "120d/72f SDR", "support_days": 0.36749775873705864, "machines_text": "T04"}, "FP82170R": {"machines": ["T01", "T06"], "total_avg_td": 13.207385568461536, "stock_a_a2": 15593.0, "spec": "255d/48f SDR", "support_days": 1.180627302744547, "machines_text": "T01, T06"}, "FP82168R": {"machines": ["T02", "J08"], "total_avg_td": 9.444644378181819, "stock_a_a2": 23844.0, "spec": "255d/48f SDR", "support_days": 2.5246053790105956, "machines_text": "J08, T02"}, "FP01422": {"machines": ["A07"], "total_avg_td": 1.0394271, "stock_a_a2": 0, "spec": "125d/72f CE", "support_days": 0.0, "machines_text": "A07"}, "FP81858": {"machines": ["A13"], "total_avg_td": 1.3403023425, "stock_a_a2": 69536.0, "spec": "125d/72f HC", "support_days": 51.88083150723882, "machines_text": "A13"}, "FP82781": {"machines": ["A15"], "total_avg_td": 1.03977648, "stock_a_a2": 2596.0, "spec": "250d/48f HC", "support_days": 2.4966904425458827, "machines_text": "A15"}, "FP82167R": {"machines": ["T03", "A23"], "total_avg_td": 4.453183764, "stock_a_a2": 12173.0, "spec": "255d/48f SDR", "support_days": 2.7335498926426065, "machines_text": "A23, T03"}, "FP83024R": {"machines": ["T05"], "total_avg_td": 2.9885030999999995, "stock_a_a2": 19950.0, "spec": "340d/72f SDR2", "support_days": 6.675582836102798, "machines_text": "T05"}};
+        const tbody = document.getElementById('tableBody');
+
+        function cleanPoyId(val) {
+            if (!val) return "";
+            return val.trim().toUpperCase().replace(/[×*X]\d+$/, '').trim();
         }
-        document.getElementById('mainSearch').addEventListener('input', renderTable);
-        renderTable();
+        
+        function handleSearch(val) {
+            const queryRaw = val.trim().toUpperCase();
+            const queryClean = cleanPoyId(queryRaw);
+            const panel = document.getElementById('analysisPanel');
+            const clearBtn = document.getElementById('clearSearch');
+            const rows = tbody.getElementsByTagName('tr');
+            
+            clearBtn.style.display = queryRaw ? 'block' : 'none';
+
+            if (!queryRaw) {
+                panel.style.display = 'none';
+                Array.from(rows).forEach(r => r.style.display = '');
+                return;
+            }
+
+            Array.from(rows).forEach(row => {
+                row.style.display = row.innerText.toUpperCase().includes(queryRaw) ? '' : 'none';
+            });
+
+            let matchedKey = Object.keys(poyAnalysis).find(k => k === queryClean);
+            if (!matchedKey && queryClean.length >= 3) {
+                matchedKey = Object.keys(poyAnalysis).find(k => k.includes(queryClean));
+            }
+
+            if (matchedKey) {
+                const info = poyAnalysis[matchedKey];
+                panel.style.display = 'block';
+                const color = info.support_days < 1 ? 'var(--danger)' : 'var(--accent)';
+                panel.innerHTML = `
+                    <div style="display:flex; justify-content:space-between; align-items:center; height:100%;">
+                        <div>
+                            <div style="font-size:12px; color:var(--text-muted); font-weight:bold; margin-bottom:5px;">POY 深度分析系統:</div>
+                            <div style="font-weight:900; font-size:20px; color:var(--primary);">${matchedKey} <span style="font-size:14px; font-weight:normal; color:var(--text-muted); margin-left:10px;">${info.spec}</span></div>
+                            <div style="font-size:13px; margin-top:5px; color:var(--text-muted);">關聯機台: <span style="color:var(--accent); font-weight:bold;">${info.machines_text}</span></div>
+                        </div>
+                        <div style="text-align:right; border-left:2px solid #e2e8f0; padding-left:25px;">
+                            <div style="font-size:12px; color:var(--text-muted); font-weight:bold;">全場預估支撐天數</div>
+                            <div style="font-size:28px; font-weight:900; color:${color};">${info.support_days.toFixed(2)} <span style="font-size:14px;">DAYS</span></div>
+                            <div style="font-size:11px; color:var(--text-muted);">庫存 ${info.stock_a_a2.toLocaleString()} KG / 日耗 ${(info.total_avg_td*1000).toLocaleString()} KG</div>
+                        </div>
+                    </div>
+                `;
+            } else {
+                panel.style.display = 'none';
+            }
+        }
+
+        function clearSearch() {
+            document.getElementById('poySearch').value = '';
+            handleSearch('');
+        }
+
+        function clickPoy(batch) {
+            document.getElementById('poySearch').value = batch;
+            handleSearch(batch);
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        rawData.forEach(d => {
+            const tr = document.createElement('tr');
+            const isActive = d.is_active;
+            tr.className = isActive ? 'active' : 'history';
+            
+            // DTY 庫存渲染
+            const s = d.stock || {A:0, AX:0, B:0, C:0};
+            let stockTags = "";
+            if (s.A > 0) stockTags += `<span class="tag tag-a">A:${s.A.toFixed(0)}</span>`;
+            if (s.AX > 0) stockTags += `<span class="tag tag-ax">AX:${s.AX.toFixed(0)}</span>`;
+            if (s.B > 0) stockTags += `<span class="tag tag-b">B:${s.B.toFixed(0)}</span>`;
+            if (s.C > 0) stockTags += `<span class="tag tag-c">C:${s.C.toFixed(0)}</span>`;
+            
+            const totalStock = d.stock_summary?.total_deposit > 0 
+                ? `<span class="total-stock">總:${d.stock_summary.total_deposit.toFixed(0)}</span>` 
+                : '<span style="color:#cbd5e1">---</span>';
+
+            // 狀態指示燈
+            let statusHtml = "";
+            if (isActive) {
+                if (d.dty_batch === '---') {
+                    const displayStatus = d.last_status || '停機';
+                    const isStop = displayStatus.includes('停機');
+                    statusHtml = `<div class="status-indicator"><span class="dot" style="background:${isStop ? 'var(--danger)' : '#94a3b8'}"></span><span style="color:${isStop ? 'var(--danger)' : 'var(--text-muted)'}; font-weight:bold;">${displayStatus}</span></div>`;
+                } else {
+                    statusHtml = `<div class="status-indicator"><span class="dot dot-running"></span><span style="color:var(--success)">運行中</span></div>`;
+                    if (d.last_status) {
+                        const isStop = d.last_status.includes('停機');
+                        statusHtml += `<div style="font-size:12px; color:${isStop ? 'var(--danger)' : 'var(--warning)'}; margin-top:4px; font-weight:bold;">[${d.last_status}]</div>`;
+                    }
+                }
+            } else {
+                statusHtml = `<div style="font-size:13px; color:var(--text-muted)">已完工 (${d.last_date})</div>`;
+            }
+
+            // POY 區塊
+            let poyHtml = '<span style="color:#cbd5e1">---</span>';
+            if (d.poy_list && d.poy_list.length > 0) {
+                poyHtml = d.poy_list.map(p => {
+                    const stockVal = parseFloat(p.stock_a_a2).toLocaleString(undefined, {minimumFractionDigits:1});
+                    const color = p.stock_a_a2 < 500 ? 'var(--danger)' : 'var(--accent)';
+                    return `
+                        <div class="poy-info-box">
+                            <div class="clickable-poy" onclick="clickPoy('${p.batch}')">${p.batch}</div>
+                            <div class="spec-text">${p.spec}</div>
+                            <div class="stock-label" style="color:${color}">庫存(A+A2): ${stockVal} KG</div>
+                            <div class="history-tag" title="${p.history}">履歷: ${p.history}</div>
+                        </div>
+                    `;
+                }).join('');
+            }
+
+            tr.innerHTML = `
+                <td data-label="機台"><span class="machine-badge">${d.machine} <span style="opacity:0.6; font-size:11px;">(${isActive ? d.current_sides.join('/') : d.produced_sides.join('/')})</span></span></td>
+                <td data-label="狀態">${statusHtml}</td>
+                <td data-label="批號 / 規格">
+                    <span class="batch-text">${d.dty_batch}</span>
+                    <span class="spec-text">${d.spec}</span>
+                </td>
+                <td data-label="POY庫存(A+A2)">${poyHtml}</td>
+                <td data-label="平均日產" style="font-weight:900; font-family:'Consolas'; color:${isActive && d.dty_batch !== '---' ? 'var(--accent)' : 'var(--text-muted)'}; font-size:18px;">
+                    ${d.avg_td > 0 ? d.avg_td.toFixed(2) : '---'}
+                </td>
+                <td data-label="生產天數" style="font-weight:bold;">${d.days}</td>
+                <td data-label="繳庫量">
+                    <div class="stock-tags">${stockTags}</div>
+                    ${totalStock}
+                </td>
+            `;
+            tbody.appendChild(tr);
+        });
     </script>
 </body>
 </html>
