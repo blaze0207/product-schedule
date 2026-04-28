@@ -188,22 +188,22 @@ def generate_v3_html(result):
         /* 表格排版旗艦版 */
         .table-wrapper { background: white; border-radius: 20px; box-shadow: 0 10px 40px rgba(0,0,0,0.04); overflow: hidden; border: 1px solid var(--border); }
         table { width: 100%; border-collapse: collapse; table-layout: fixed; }
-        /* 提升表頭字體大小至 16px */
+        /* 提升表頭字體大小至 15px 並增加間距 */
         th { 
-            background: #f8fafc; padding: 25px 15px; text-align: left; 
-            font-size: 16px; font-weight: 900; color: var(--primary); 
+            background: #f8fafc; padding: 22px 15px; text-align: left; 
+            font-size: 15px; font-weight: 900; color: var(--primary); 
             text-transform: uppercase; letter-spacing: 0.1em; border-bottom: 4px solid var(--border); 
         }
-        td { padding: 22px 12px; border-bottom: 1px solid #f1f5f9; font-size: 17px; vertical-align: middle; }
+        td { padding: 18px 12px; border-bottom: 1px solid #f1f5f9; font-size: 16px; vertical-align: middle; overflow-wrap: break-word; }
 
         tr.active { background: white; transition: background 0.2s; }
         tr.active:hover { background: #fcfdfe; }
         tr.history { opacity: 0.7; background: #fbfcfd; }
 
         .machine-badge { 
-            background: var(--primary); color: white; padding: 10px 14px; border-radius: 8px; 
-            font-weight: 900; font-size: 18px; box-shadow: 0 4px 10px rgba(0,0,0,0.1);
-            white-space: nowrap; display: inline-flex; align-items: center; gap: 8px;
+            background: var(--primary); color: white; padding: 6px 10px; border-radius: 6px; 
+            font-weight: 900; font-size: 15px; box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+            white-space: nowrap; display: inline-flex; align-items: center; gap: 6px;
         }
 
         
@@ -250,6 +250,18 @@ def generate_v3_html(result):
         .tag-c { background: #fee2e2; color: #991b1b; }
         .total-stock { font-size: 22px; font-weight: 900; color: var(--primary); margin-top: 10px; display: block; }
 
+        /* 備註區塊樣式 */
+        .remark-box {
+            margin-top: 10px; padding: 10px 12px; border-radius: 8px;
+            background: #f1f5f9; border-left: 4px solid #94a3b8;
+            font-size: 12px; color: var(--text-main); font-weight: 500;
+            line-height: 1.5; overflow-wrap: break-word;
+        }
+        .remark-tag { 
+            font-weight: 900; color: var(--text-muted); font-size: 10px; 
+            text-transform: uppercase; margin-right: 6px; 
+        }
+
         /* 進度條樣式 */
         .progress-container {
             width: 100%; height: 8px; background: #e2e8f0; border-radius: 10px;
@@ -284,13 +296,13 @@ def generate_v3_html(result):
                 padding: 15px; position: relative; background: white;
             }
             td { 
-                display: grid; grid-template-columns: 140px 1fr; gap: 15px; 
-                padding: 15px 10px; border: none; border-bottom: 1px solid #f1f5f9;
-                text-align: left !important; min-height: 60px; align-items: center;
+                display: grid; grid-template-columns: 110px 1fr; gap: 10px; 
+                padding: 12px 10px; border: none; border-bottom: 1px solid #f1f5f9;
+                text-align: left !important; min-height: 50px; align-items: center;
             }
             td::before { 
-                content: attr(data-label); font-size: 14px; font-weight: 900; 
-                color: var(--text-muted); text-transform: uppercase;
+                content: attr(data-label); font-size: 13px; font-weight: 900; 
+                color: var(--text-muted); text-transform: uppercase; padding-right: 5px;
             }
             td[style*="text-align: center"] { justify-content: start !important; }
             .poy-info-box { margin-bottom: 10px; }
@@ -529,6 +541,17 @@ def generate_v3_html(result):
                 `;
             }
 
+            // 備註顯示
+            let remarkHtml = "";
+            if (d.remark) {
+                remarkHtml = `
+                    <div class="remark-box">
+                        <span class="remark-tag">📝 備註</span>
+                        ${d.remark}
+                    </div>
+                `;
+            }
+
             // 品質指標
             let qualityHtml = "";
             if (d.quality && (d.quality.a_rate !== null || d.quality.fixed_weight_rate !== null)) {
@@ -558,6 +581,7 @@ def generate_v3_html(result):
                     <span class="spec-text">${d.spec}</span>
                     ${qualityHtml}
                     ${nextPlanHtml}
+                    ${remarkHtml}
                 </td>
                 <td data-label="物料與支撐">${poyCombinedHtml}</td>
                 <td data-label="效率與天數" style="text-align: center;">

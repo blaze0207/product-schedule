@@ -195,6 +195,7 @@ class RealityLogAnalyzer:
             # 顯示用批號
             display_batch = batch_raw.replace("FD", "").strip()
             poy_plan = str(row.iloc[8]).strip().upper() if not pd.isna(row.iloc[8]) else ""
+            remark = str(row.iloc[2]).strip() if not pd.isna(row.iloc[2]) and str(row.iloc[2]).strip() != '0' else ""
             
             if m not in plan_map: plan_map[m] = []
             plan_map[m].append({
@@ -202,7 +203,8 @@ class RealityLogAnalyzer:
                 'display_batch': display_batch,
                 'poy_plan': poy_plan,
                 'side_mark': side_mark,
-                'date_range': date_range
+                'date_range': date_range,
+                'remark': remark
             })
         return plan_map, target_aggregate, batch_total_target
 
