@@ -299,13 +299,24 @@
         </div>
 
         <section class="interactive-section">
+            <!-- 第一排：工程師篩選 -->
             <div class="filter-group">
-                <button class="filter-btn active" id="btn-all" onclick="setEngineer('all')">🌐 全部</button>
-                <button class="filter-btn" id="btn-luo" onclick="setEngineer('luo')">👤 羅工</button>
-                <button class="filter-btn" id="btn-wu" onclick="setEngineer('wu')">👤 吳工</button>
+                <span style="font-size:14px; font-weight:900; color:var(--text-muted); width:100%; margin-bottom:5px; display:block;">工程師篩選:</span>
+                <button class="filter-btn active" id="btn-eng-all" onclick="setEngineer('all')">🌐 全部</button>
+                <button class="filter-btn" id="btn-eng-luo" onclick="setEngineer('luo')">👤 羅工</button>
+                <button class="filter-btn" id="btn-eng-wu" onclick="setEngineer('wu')">👤 吳工</button>
             </div>
             
-            <div class="search-area">
+            <!-- 第二排：狀態篩選 -->
+            <div class="filter-group" style="margin-top: 20px;">
+                <span style="font-size:14px; font-weight:900; color:var(--text-muted); width:100%; margin-bottom:5px; display:block;">機台狀態篩選:</span>
+                <button class="filter-btn active" id="btn-stat-all" onclick="setStatus('all')">🌐 全部</button>
+                <button class="filter-btn" id="btn-stat-run" onclick="setStatus('run')">🟢 運行中</button>
+                <button class="filter-btn" id="btn-stat-stop" onclick="setStatus('stop')">🔴 停機/異常</button>
+                <button class="filter-btn" id="btn-stat-off" onclick="setStatus('off')">⚪ 已完工</button>
+            </div>
+            
+            <div class="search-area" style="margin-top: 30px;">
                 <div class="search-row">
                     <!-- 通用搜尋框 -->
                     <div class="search-box">
@@ -344,6 +355,7 @@
         const poyAnalysis = {"FP81386R": {"machines": ["A08"], "total_avg_td": 1.8585764280000001, "stock_a_a2": 41990.0, "spec": "125d/36f SDR2", "support_days": 22.59256028829824, "machines_text": "A08"}, "FP81363R": {"machines": ["A09", "A12"], "total_avg_td": 3.1218317900000003, "stock_a_a2": 0, "spec": "125d/24f SDR", "support_days": 0.0, "machines_text": "A09, A12"}, "FP81857R": {"machines": ["A11"], "total_avg_td": 1.3118272800000002, "stock_a_a2": 21660.0, "spec": "125d/36f CDR", "support_days": 16.51131999633366, "machines_text": "A11"}, "FP81384R": {"machines": ["A21"], "total_avg_td": 1.9865568505263156, "stock_a_a2": 18031.0, "spec": "170d/36f SDR2", "support_days": 9.076508429760212, "machines_text": "A21"}, "FP82170R": {"machines": ["T01", "T06", "T05"], "total_avg_td": 16.652333040000002, "stock_a_a2": 19566.0, "spec": "255d/48f SDR", "support_days": 1.1749704953054434, "machines_text": "T01, T05, T06"}, "FP82168R": {"machines": ["T02", "J08"], "total_avg_td": 10.06708308923077, "stock_a_a2": 8612.0, "spec": "255d/48f SDR", "support_days": 0.8554613013190144, "machines_text": "J08, T02"}, "FP01422": {"machines": ["A07"], "total_avg_td": 1.04022225, "stock_a_a2": 0, "spec": "125d/72f CE", "support_days": 0.0, "machines_text": "A07"}, "FP81858": {"machines": ["A13"], "total_avg_td": 1.3403023425, "stock_a_a2": 67826.0, "spec": "125d/72f HC", "support_days": 50.60499996850523, "machines_text": "A13"}, "FP82781": {"machines": ["A15"], "total_avg_td": 1.1366292, "stock_a_a2": 15399.0, "spec": "250d/48f HC", "support_days": 13.547953897366, "machines_text": "A15"}, "FP82167R": {"machines": ["T03", "A23", "A19"], "total_avg_td": 4.491283568914286, "stock_a_a2": 0, "spec": "255d/48f SDR", "support_days": 0.0, "machines_text": "A19, A23, T03"}, "FP83024R": {"machines": ["T05"], "total_avg_td": 2.9934036, "stock_a_a2": 21475.0, "spec": "340d/72f SDR2", "support_days": 7.174107761479274, "machines_text": "T05"}, "FP81382R": {"machines": ["A18"], "total_avg_td": 1.67896764, "stock_a_a2": 76376.0, "spec": "125d/24f SDR2", "support_days": 45.48985827981771, "machines_text": "A18"}};
         const tbody = document.getElementById('tableBody');
         let currentEngineer = 'all';
+        let currentStatus = 'all';
 
         const engineerMaps = {
             'luo': ['A07','A08','A09','A13','A14','A15','A19','A20','A21','J07','T04','T05','T06'],
@@ -352,8 +364,15 @@
 
         function setEngineer(type) {
             currentEngineer = type;
-            document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active'));
-            document.getElementById('btn-'+type)?.classList.add('active');
+            document.querySelectorAll('[id^="btn-eng-"]').forEach(btn => btn.classList.remove('active'));
+            document.getElementById('btn-eng-'+type)?.classList.add('active');
+            applyFilters();
+        }
+
+        function setStatus(type) {
+            currentStatus = type;
+            document.querySelectorAll('[id^="btn-stat-"]').forEach(btn => btn.classList.remove('active'));
+            document.getElementById('btn-stat-'+type)?.classList.add('active');
             applyFilters();
         }
 
@@ -372,28 +391,34 @@
             const poyQueryRaw = document.getElementById('poySearch').value.trim().toUpperCase();
             const poyQueryClean = cleanPoyId(poyQueryRaw);
             
-            // 顯示/隱藏清除按鈕
             document.getElementById('clearGeneral').style.display = genQuery ? 'block' : 'none';
             document.getElementById('clearPoy').style.display = poyQueryRaw ? 'block' : 'none';
 
             // 執行表格過濾
-            Array.from(tbody.rows).forEach(row => {
+            Array.from(tbody.rows).forEach((row, index) => {
+                const data = rawData[index]; // 對應原始數據以獲得 isActive 與 dty_batch
                 const badge = row.querySelector('.machine-badge');
-                if(!badge) return;
+                if(!badge || !data) return;
                 
                 // 1. 工程師過濾
                 const mMatch = badge.innerText.match(/^[A-Z]\d+/);
                 const mId = mMatch ? mMatch[0] : "";
                 const engMatch = (currentEngineer === 'all' || engineerMaps[currentEngineer].includes(mId));
                 
-                // 2. 通用搜尋過濾 (機台或批號)
+                // 2. 狀態過濾
+                let statMatch = true;
+                if (currentStatus === 'run') statMatch = (data.is_active && data.dty_batch !== '---');
+                else if (currentStatus === 'stop') statMatch = (data.is_active && data.dty_batch === '---');
+                else if (currentStatus === 'off') statMatch = (!data.is_active);
+                
+                // 3. 通用搜尋過濾
                 const rowText = row.innerText.toUpperCase();
                 const textMatch = !genQuery || rowText.includes(genQuery);
                 
-                // 3. POY 過濾
+                // 4. POY 過濾
                 const poyMatch = !poyQueryRaw || rowText.includes(poyQueryRaw);
 
-                row.style.display = (engMatch && textMatch && poyMatch) ? '' : 'none';
+                row.style.display = (engMatch && statMatch && textMatch && poyMatch) ? '' : 'none';
             });
 
             // POY 分析面板邏輯
