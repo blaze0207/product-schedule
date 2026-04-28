@@ -339,13 +339,24 @@ def generate_v3_html(result):
         </div>
 
         <section class="interactive-section">
+            <!-- 第一排：工程師篩選 -->
             <div class="filter-group">
-                <button class="filter-btn active" id="btn-all" onclick="setEngineer('all')">🌐 全部</button>
-                <button class="filter-btn" id="btn-luo" onclick="setEngineer('luo')">👤 羅工</button>
-                <button class="filter-btn" id="btn-wu" onclick="setEngineer('wu')">👤 吳工</button>
+                <span style="font-size:14px; font-weight:900; color:var(--text-muted); width:100%; margin-bottom:5px; display:block;">工程師篩選:</span>
+                <button class="filter-btn active" id="btn-eng-all" onclick="setEngineer('all')">🌐 全部</button>
+                <button class="filter-btn" id="btn-eng-luo" onclick="setEngineer('luo')">👤 羅工</button>
+                <button class="filter-btn" id="btn-eng-wu" onclick="setEngineer('wu')">👤 吳工</button>
             </div>
             
-            <div class="search-area">
+            <!-- 第二排：狀態篩選 -->
+            <div class="filter-group" style="margin-top: 20px;">
+                <span style="font-size:14px; font-weight:900; color:var(--text-muted); width:100%; margin-bottom:5px; display:block;">機台狀態篩選:</span>
+                <button class="filter-btn active" id="btn-stat-all" onclick="setStatus('all')">🌐 全部</button>
+                <button class="filter-btn" id="btn-stat-run" onclick="setStatus('run')">🟢 運行中</button>
+                <button class="filter-btn" id="btn-stat-stop" onclick="setStatus('stop')">🔴 停機/異常</button>
+                <button class="filter-btn" id="btn-stat-off" onclick="setStatus('off')">⚪ 已完工</button>
+            </div>
+            
+            <div class="search-area" style="margin-top: 30px;">
                 <div class="search-row">
                     <!-- 通用搜尋框 -->
                     <div class="search-box">
@@ -384,6 +395,7 @@ def generate_v3_html(result):
         const poyAnalysis = VAR_POY_JSON;
         const tbody = document.getElementById('tableBody');
         let currentEngineer = 'all';
+        let currentStatus = 'all';
 
         const engineerMaps = {
             'luo': ['A07','A08','A09','A13','A14','A15','A19','A20','A21','J07','T04','T05','T06'],
@@ -392,8 +404,15 @@ def generate_v3_html(result):
 
         function setEngineer(type) {
             currentEngineer = type;
-            document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active'));
-            document.getElementById('btn-'+type)?.classList.add('active');
+            document.querySelectorAll('[id^="btn-eng-"]').forEach(btn => btn.classList.remove('active'));
+            document.getElementById('btn-eng-'+type)?.classList.add('active');
+            applyFilters();
+        }
+
+        function setStatus(type) {
+            currentStatus = type;
+            document.querySelectorAll('[id^="btn-stat-"]').forEach(btn => btn.classList.remove('active'));
+            document.getElementById('btn-stat-'+type)?.classList.add('active');
             applyFilters();
         }
 
@@ -412,28 +431,34 @@ def generate_v3_html(result):
             const poyQueryRaw = document.getElementById('poySearch').value.trim().toUpperCase();
             const poyQueryClean = cleanPoyId(poyQueryRaw);
             
-            // 顯示/隱藏清除按鈕
             document.getElementById('clearGeneral').style.display = genQuery ? 'block' : 'none';
             document.getElementById('clearPoy').style.display = poyQueryRaw ? 'block' : 'none';
 
             // 執行表格過濾
-            Array.from(tbody.rows).forEach(row => {
+            Array.from(tbody.rows).forEach((row, index) => {
+                const data = rawData[index]; // 對應原始數據以獲得 isActive 與 dty_batch
                 const badge = row.querySelector('.machine-badge');
-                if(!badge) return;
+                if(!badge || !data) return;
                 
                 // 1. 工程師過濾
                 const mMatch = badge.innerText.match(/^[A-Z]\d+/);
                 const mId = mMatch ? mMatch[0] : "";
                 const engMatch = (currentEngineer === 'all' || engineerMaps[currentEngineer].includes(mId));
                 
-                // 2. 通用搜尋過濾 (機台或批號)
+                // 2. 狀態過濾
+                let statMatch = true;
+                if (currentStatus === 'run') statMatch = (data.is_active && data.dty_batch !== '---');
+                else if (currentStatus === 'stop') statMatch = (data.is_active && data.dty_batch === '---');
+                else if (currentStatus === 'off') statMatch = (!data.is_active);
+                
+                // 3. 通用搜尋過濾
                 const rowText = row.innerText.toUpperCase();
                 const textMatch = !genQuery || rowText.includes(genQuery);
                 
-                // 3. POY 過濾
+                // 4. POY 過濾
                 const poyMatch = !poyQueryRaw || rowText.includes(poyQueryRaw);
 
-                row.style.display = (engMatch && textMatch && poyMatch) ? '' : 'none';
+                row.style.display = (engMatch && statMatch && textMatch && poyMatch) ? '' : 'none';
             });
 
             // POY 分析面板邏輯
