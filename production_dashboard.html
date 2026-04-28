@@ -4,6 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="last-update" content="2026-04-28 14:17:55">
     <title>撚二科生產戰情室</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap');
@@ -193,10 +194,10 @@
         .poy-card:hover { border-left-color: var(--accent); background: var(--accent-soft); transform: translateX(4px); }
         .poy-main { flex: 1; }
         .poy-support { 
-            text-align: right; border-left: 2px dashed var(--border); padding-left: 15px; margin-left: 15px;
-            min-width: 85px;
+            text-align: right; border-left: 2px dashed var(--border); padding-left: 10px; margin-left: 10px;
+            min-width: 75px;
         }
-        .support-val { font-family: 'Consolas', monospace; font-size: 20px; font-weight: 900; }
+        .support-val { font-family: 'Consolas', monospace; font-size: 19px; font-weight: 900; }
         .support-unit { font-size: 11px; opacity: 0.6; margin-left: 2px; }
 
         .clickable-poy { color: var(--accent); font-weight: 900; font-family: 'Consolas', monospace; font-size: 17px; }
@@ -506,7 +507,7 @@
                                 <div class="stock-label" style="color:${stockColor}">庫存: ${stockVal} KG</div>
                             </div>
                             <div class="poy-support">
-                                <div style="font-size:11px; font-weight:800; color:var(--text-muted); margin-bottom:2px;">支撐預估</div>
+                                <div style="font-size:11px; font-weight:800; color:var(--text-muted); margin-bottom:2px;">支撐</div>
                                 <div class="support-val" style="color:${dayColor}">${sDays >= 999 ? '-' : sDays.toFixed(1)}<span class="support-unit">天</span></div>
                             </div>
                         </div>
@@ -601,6 +602,33 @@
         backToTop.onclick = function() {
             window.scrollTo({ top: 0, behavior: 'smooth' });
         };
+
+        // 自動偵測更新邏輯
+        async function checkForUpdates() {
+            try {
+                // 使用快取破壞參數確保抓到最新檔案
+                const response = await fetch(window.location.href, { 
+                    cache: "no-store", 
+                    headers: {'pragma': 'no-cache', 'cache-control': 'no-cache'} 
+                });
+                const text = await response.text();
+                const parser = new DOMParser();
+                const doc = parser.parseFromString(text, 'text/html');
+                const serverUpdateTime = doc.querySelector('meta[name="last-update"]')?.getAttribute('content');
+                const localUpdateTime = document.querySelector('meta[name="last-update"]')?.getAttribute('content');
+
+                if (serverUpdateTime && localUpdateTime && serverUpdateTime !== localUpdateTime) {
+                    console.log(`偵測到新資料 (伺服器: ${serverUpdateTime}, 本地: ${localUpdateTime})，正在自動重新整理...`);
+                    location.reload(true);
+                }
+            } catch (e) {
+                console.error("更新檢查失敗:", e);
+            }
+        }
+
+        // 每 60 秒檢查一次伺服器上是否有新版本
+        setInterval(checkForUpdates, 60000);
+        console.log("自動更新偵測已啟動 (60s)");
     </script>
 </body>
 </html>
