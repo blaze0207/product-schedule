@@ -157,8 +157,9 @@ class RealityLogAnalyzer:
         xl = pd.ExcelFile(file_path)
         df = xl.parse(xl.sheet_names[0])
         
-        # 1. 補全機台名稱 (Index 0)
+        # 1. 補全機台名稱 (Index 0) 與 備註 (Index 2)
         df.iloc[:, 0] = df.iloc[:, 0].ffill()
+        df.iloc[:, 2] = df.iloc[:, 2].ffill()
         
         plan_map = {}
         target_aggregate = {} # (機台, 批號) -> 重量
