@@ -7,7 +7,7 @@ from datetime import datetime
 class RealityLogAnalyzer:
     def __init__(self, base_dir):
         self.base_dir = base_dir
-        self.status_keywords = ["停機", "改紡", "了機", "清車", "檢修", "待料", "待機"]
+        self.status_keywords = ["停機", "改紡", "了機", "清車", "檢修", "待料", "待機", "SAMPLE", "TEST"]
 
     def standardize_id(self, val):
         if pd.isna(val): return ""
@@ -222,13 +222,28 @@ class RealityLogAnalyzer:
                 tasks[key] = {'machine': m, 'dty_batch': "---" if is_status_only else batch_raw, 'dty_std': dty_std, 'poy_list': [], 'spec': str(row.iloc[4]).strip() if not is_status_only else "---", 'sides': set(), 'active_sides': set(), 'days': 0, 'last_status': "", 'last_td': 0, 'total_td': 0, 'is_active': False, 'last_date': d, 'stock': {'A': 0, 'AX': 0, 'B': 0, 'C': 0}}
             t = tasks[key]; td = pd.to_numeric(row.iloc[47], errors='coerce') or 0; aa = str(row.iloc[26]).strip() if not pd.isna(row.iloc[26]) else ""
             l_val, r_val = str(row.iloc[11]).strip(), str(row.iloc[12]).strip()
-            l_is_status, r_is_status = any(k in l_val for k in self.status_keywords), any(k in r_val for k in self.status_keywords)
+            # 判斷是否為「停機類」關鍵字 (排除 SAMPLE, TEST，因為它們不代表機台停止)
+            stop_keywords = ["停機", "改紡", "了機", "清車", "檢修", "待料", "待機"]
+            l_is_stop, r_is_stop = any(k in l_val for k in stop_keywords), any(k in r_val for k in stop_keywords)
+            
             if re.match(r'^-?\d+(\.\d+)?$', aa): aa = ""
-            if is_status_only: eff_status = batch_raw
+            
+            if is_status_only: 
+                eff_status = batch_raw
             else:
                 inv_key = self.get_inventory_key(batch_raw)
                 if inv_key in stock_data: t['stock'] = stock_data[inv_key]
-                eff_status = "全台停機" if (l_is_status and r_is_status) else ("半邊停/了機" if (l_is_status or r_is_status) else ("" if any(k in aa for k in self.status_keywords) else aa))
+                
+                if l_is_stop and r_is_stop:
+                    eff_status = "全台停機"
+                elif l_is_stop or r_is_stop:
+                    eff_status = "半邊停/了機"
+                else:
+                    # 如果 aa 是停機類字眼則不重複顯示，但 SAMPLE/TEST 則保留
+                    if any(k in aa for k in stop_keywords):
+                        eff_status = aa if any(x in aa for x in ["SAMPLE", "TEST"]) else ""
+                    else:
+                        eff_status = aa
             poy_batch_raw = str(row.iloc[5]).strip().upper()
             if poy_batch_raw and poy_batch_raw != 'NAN' and not is_status_only:
                 poy_clean_id = self.clean_poy_id(poy_batch_raw)
