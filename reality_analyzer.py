@@ -74,9 +74,12 @@ class RealityLogAnalyzer:
         date_match = re.search(r'\d{4}/\d{2}/\d{2}', raw_l1)
         update_date = date_match.group(0) if date_match else "Unknown"
         df_total = xl.parse('總庫存')
-        total_h = pd.to_numeric(df_total.iloc[-1, 7], errors='coerce') or 0
+        total_series = pd.to_numeric(df_total.iloc[:, 7], errors='coerce').dropna()
+        total_h = total_series.iloc[-1] if not total_series.empty else 0
+
         df_purchased = xl.parse('外購')
-        purchased_h = pd.to_numeric(df_purchased.iloc[-1, 7], errors='coerce') or 0
+        purchased_series = pd.to_numeric(df_purchased.iloc[:, 7], errors='coerce').dropna()
+        purchased_h = purchased_series.iloc[-1] if not purchased_series.empty else 0
         return total_h - purchased_h, update_date
 
     def get_poy_data(self):
