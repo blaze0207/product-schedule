@@ -166,6 +166,22 @@ def generate_v3_html(result):
         .filter-btn:hover { border-color: var(--accent); background: var(--accent-soft); color: var(--accent); transform: translateY(-2px); }
         .filter-btn.active { background: var(--accent); border-color: var(--accent); color: white; box-shadow: 0 8px 15px rgba(59,130,246,0.3); }
         
+        /* 數量標籤樣式 */
+        .count-badge {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(0,0,0,0.1);
+            color: inherit;
+            padding: 2px 8px;
+            border-radius: 20px;
+            font-size: 13px;
+            margin-left: 8px;
+            font-weight: 900;
+            min-width: 32px;
+        }
+        .filter-btn.active .count-badge { background: rgba(255,255,255,0.2); }
+        
         /* 搜尋引擎區域 */
         .search-area { display: flex; flex-direction: column; gap: 20px; }
         .search-row { display: flex; gap: 20px; align-items: stretch; flex-wrap: wrap; }
@@ -356,8 +372,8 @@ def generate_v3_html(result):
             <div class="filter-group" style="margin-top: 20px;">
                 <span style="font-size:14px; font-weight:900; color:var(--text-muted); width:100%; margin-bottom:5px; display:block;">機台狀態篩選:</span>
                 <button class="filter-btn active" id="btn-stat-all" onclick="setStatus('all')">🌐 全部</button>
-                <button class="filter-btn" id="btn-stat-run" onclick="setStatus('run')">🟢 運行中</button>
-                <button class="filter-btn" id="btn-stat-stop" onclick="setStatus('stop')">🔴 停機/異常</button>
+                <button class="filter-btn" id="btn-stat-run" onclick="setStatus('run')">🟢 運行中 <span class="count-badge" id="count-run">0</span></button>
+                <button class="filter-btn" id="btn-stat-stop" onclick="setStatus('stop')">🔴 停機/異常 <span class="count-badge" id="count-stop">0</span></button>
                 <button class="filter-btn" id="btn-stat-off" onclick="setStatus('off')">⚪ 已完工</button>
             </div>
             
@@ -429,6 +445,27 @@ def generate_v3_html(result):
         function cleanPoyId(val) {
             if (!val) return "";
             return val.trim().toUpperCase().replace(/[×*X]\d+$/, '').trim();
+        }
+
+        function updateStatusCounts() {
+            let runCount = 0;
+            let stopCount = 0;
+
+            rawData.forEach(d => {
+                if (!d.is_active) return;
+                
+                // 計算台數：2邊=1台, 1邊=0.5台
+                const machineWeight = (d.current_sides && d.current_sides.length >= 2) ? 1.0 : 0.5;
+
+                if (d.dty_batch !== '---') {
+                    runCount += machineWeight;
+                } else {
+                    stopCount += machineWeight;
+                }
+            });
+
+            document.getElementById('count-run').innerText = runCount;
+            document.getElementById('count-stop').innerText = stopCount;
         }
 
         function applyFilters() {
@@ -633,6 +670,9 @@ def generate_v3_html(result):
             `;
             tbody.appendChild(tr);
         });
+
+        // 初始化統計數量
+        updateStatusCounts();
 
         // 回到頂部邏輯
         const backToTop = document.getElementById('back-to-top');
