@@ -454,7 +454,29 @@ def generate_v3_html(result):
             rawData.forEach(d => {
                 if (!d.is_active) return;
                 
-                // 計算台數：2邊=1台, 1邊=0.5台
+                // --- S1/S2 特殊加總邏輯 ---
+                if (d.machine === 'S1') {
+                    // S1: 根據 SEC 判定權重
+                    const statStr = d.last_status || "";
+                    const match = statStr.match(/(\d+)SEC/i);
+                    if (match) {
+                        const sec = parseInt(match[1]);
+                        const weight = sec > 6 ? 1.0 : 0.5;
+                        runCount += weight;
+                    } else if (d.dty_batch !== '---') {
+                        runCount += 1.0;
+                    } else {
+                        stopCount += 1.0;
+                    }
+                    return; // 處理完 S1，跳過後續通用邏輯
+                }
+                
+                if (d.machine === 'S2') {
+                    // S2: 不列入統計
+                    return;
+                }
+
+                // --- 通用機台加總邏輯 ---
                 const machineWeight = (d.current_sides && d.current_sides.length >= 2) ? 1.0 : 0.5;
 
                 if (d.dty_batch !== '---') {
@@ -464,8 +486,8 @@ def generate_v3_html(result):
                 }
             });
 
-            document.getElementById('count-run').innerText = runCount;
-            document.getElementById('count-stop').innerText = stopCount;
+            document.getElementById('count-run').innerText = runCount.toFixed(1).replace(/\.0$/, '');
+            document.getElementById('count-stop').innerText = stopCount.toFixed(1).replace(/\.0$/, '');
         }
 
         function applyFilters() {
@@ -640,8 +662,11 @@ def generate_v3_html(result):
             const progressBarColor = progressPct >= 100 ? 'var(--success)' : (progressPct >= 80 ? 'var(--warning)' : 'var(--accent)');
             const targetDisplay = d.target_kg > 0 ? `<div class="progress-info"><span>TARGET: ${Math.round(d.target_kg).toLocaleString()} KG</span><span>${progressPct.toFixed(1)}%</span></div>` : "";
 
+            const isSSeries = d.machine === 'S1' || d.machine === 'S2';
+            const sideInfo = isSSeries ? '' : `<span style="opacity:0.6; font-size:12px;">(${isActive ? d.current_sides.join('/') : d.produced_sides.join('/')})</span>`;
+            
             tr.innerHTML = `
-                <td data-label="機台"><span class="machine-badge">${d.machine} <span style="opacity:0.6; font-size:12px;">(${isActive ? d.current_sides.join('/') : d.produced_sides.join('/')})</span></span></td>
+                <td data-label="機台"><span class="machine-badge">${d.machine} ${sideInfo}</span></td>
                 <td data-label="狀態">${statusHtml}</td>
                 <td data-label="批號 / 規格">
                     <span class="batch-text">${d.dty_batch}</span>
