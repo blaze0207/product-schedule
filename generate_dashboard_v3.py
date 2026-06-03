@@ -665,8 +665,8 @@ def generate_v3_html(result):
             const isSSeries = d.machine === 'S1' || d.machine === 'S2';
             const sideInfo = isSSeries ? '' : `<span style="opacity:0.6; font-size:12px;">(${isActive ? d.current_sides.join('/') : d.produced_sides.join('/')})</span>`;
             
-            // 批號顯示優化：加入「生產中:」字樣
-            const displayBatchName = (d.dty_batch && d.dty_batch !== '---') ? `生產中:${d.dty_batch}` : d.dty_batch;
+            // 批號顯示優化：加入「生產中:」字樣 (僅限運行中)
+            const displayBatchName = (isActive && d.dty_batch && d.dty_batch !== '---') ? `生產中:${d.dty_batch}` : d.dty_batch;
 
             tr.innerHTML = `
                 <td data-label="機台"><span class="machine-badge">${d.machine} ${sideInfo}</span></td>
