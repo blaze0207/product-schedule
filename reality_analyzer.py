@@ -225,45 +225,56 @@ class RealityLogAnalyzer:
                 tasks[key] = {'machine': m, 'dty_batch': "---" if is_status_only else batch_raw, 'dty_std': dty_std, 'poy_list': [], 'spec': str(row.iloc[4]).strip() if not is_status_only else "---", 'sides': set(), 'active_sides': set(), 'days': 0, 'last_status': "", 'last_td': 0, 'total_td': 0, 'is_active': False, 'last_date': d, 'stock': {'A': 0, 'AX': 0, 'B': 0, 'C': 0}}
             t = tasks[key]; td = pd.to_numeric(row.iloc[47], errors='coerce') or 0
             
-            # --- 核心狀態判斷邏輯 (根據使用者人工判斷邏輯改寫) ---
-            # X 欄 (Index 23) = L 邊最終效率/狀態, Y 欄 (Index 24) = R 邊最終效率/狀態
-            x_val = str(row.iloc[23]).strip().upper() if not pd.isna(row.iloc[23]) else ""
-            y_val = str(row.iloc[24]).strip().upper() if not pd.isna(row.iloc[24]) else ""
-
-            def get_side_status(val):
-                if not val or val == '0' or val == 'NAN': return "停機"
-                try:
-                    float(val) # 如果是數字，代表正在運行且有效率，不顯示額外狀態文字
-                    return ""
-                except ValueError:
-                    return val # 如果是文字 (如 SAMPLE, TEST, 改紡)，直接作為狀態顯示
-
-            l_stat = get_side_status(x_val)
-            r_stat = get_side_status(y_val)
-            
-            if is_status_only: 
-                eff_status = batch_raw
-            else:
-                inv_key = self.get_inventory_key(batch_raw)
-                if inv_key in stock_data: t['stock'] = stock_data[inv_key]
-                
-                if d_count >= 2:
-                    # 雙列模式：如果是第 1 列看 L 邊，第 2 列看 R 邊
-                    eff_status = l_stat if occ == 1 else r_stat
+            # --- 核心狀態判斷邏輯 ---
+            if m in ['S1', 'S2']:
+                # S1, S2 專用邏輯：查看 AT 欄位 (Index 45)
+                at_val = str(row.iloc[45]).strip().upper()
+                match = re.search(r'(\d+)SEC', at_val)
+                if match:
+                    num = int(match.group(1))
+                    rem = max(0, 12 - num)
+                    eff_status = f"{num}Sec生產中, {rem}Sec停機"
                 else:
-                    # 單列模式：同時考慮兩邊
-                    if l_stat == "停機" and r_stat == "停機":
-                        eff_status = "全台停機"
-                    elif l_stat == "停機":
-                        eff_status = "L邊停機"
-                    elif r_stat == "停機":
-                        eff_status = "R邊停機"
+                    eff_status = at_val if at_val and at_val != 'NAN' else "停機"
+            else:
+                # 一般機台邏輯：根據使用者人工判斷邏輯 (X/Y 欄位)
+                # X 欄 (Index 23) = L 邊最終效率/狀態, Y 欄 (Index 24) = R 邊最終效率/狀態
+                x_val = str(row.iloc[23]).strip().upper() if not pd.isna(row.iloc[23]) else ""
+                y_val = str(row.iloc[24]).strip().upper() if not pd.isna(row.iloc[24]) else ""
+
+                def get_side_status(val):
+                    if not val or val == '0' or val == 'NAN': return "停機"
+                    try:
+                        float(val) # 如果是數字，代表正在運行且有效率
+                        return ""
+                    except ValueError:
+                        return val # 文字則直接顯示
+
+                l_stat = get_side_status(x_val)
+                r_stat = get_side_status(y_val)
+                
+                if is_status_only: 
+                    eff_status = batch_raw
+                else:
+                    inv_key = self.get_inventory_key(batch_raw)
+                    if inv_key in stock_data: t['stock'] = stock_data[inv_key]
+                    
+                    if d_count >= 2:
+                        # 雙列模式
+                        eff_status = l_stat if occ == 1 else r_stat
                     else:
-                        # 兩邊都有文字狀態或都在運行
-                        if l_stat and r_stat:
-                            eff_status = f"{l_stat}/{r_stat}" if l_stat != r_stat else l_stat
+                        # 單列模式
+                        if l_stat == "停機" and r_stat == "停機":
+                            eff_status = "全台停機"
+                        elif l_stat == "停機":
+                            eff_status = "L邊停機"
+                        elif r_stat == "停機":
+                            eff_status = "R邊停機"
                         else:
-                            eff_status = l_stat or r_stat
+                            if l_stat and r_stat:
+                                eff_status = f"{l_stat}/{r_stat}" if l_stat != r_stat else l_stat
+                            else:
+                                eff_status = l_stat or r_stat
             # --------------------------------------------------
             poy_batch_raw = str(row.iloc[5]).strip().upper()
             if poy_batch_raw and poy_batch_raw != 'NAN' and not is_status_only:
