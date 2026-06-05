@@ -188,29 +188,33 @@ class RealityLogAnalyzer:
         df = df[df['m_name'].apply(is_valid_machine)].copy()
         df['occ'] = df.groupby([df.iloc[:, 0], 'm_name']).cumcount() + 1; df['d_count'] = df.groupby([df.iloc[:, 0], 'm_name'])['m_name'].transform('count')
         
-        # 預先處理所有生產資訊，將產量累計到庫存地圖中 (只累計庫存表日期之後的)
+        tasks = {}
         for _, row in df.iterrows():
             d = row.iloc[0]
             if pd.isna(d): continue
             
-            # 如果生產日期大於庫存表日期，則將產量累計進去
-            if stock_cutoff_date and d > stock_cutoff_date:
-                batch_raw = str(row.iloc[2]).strip().upper()
-                if batch_raw and not any(k in batch_raw for k in self.status_keywords):
-                    inv_key = self.get_inventory_key(batch_raw)
-                    td = pd.to_numeric(row.iloc[47], errors='coerce') or 0
-                    if td > 0:
-                        if inv_key not in stock_data:
-                            stock_data[inv_key] = {'A': 0, 'AX': 0, 'B': 0, 'C': 0}
-                        # 現場產出預設為 A 級
-                        stock_data[inv_key]['A'] += (td * 1000)
-
-        tasks = {}
-        for _, row in df.iterrows():
-            d = row.iloc[0]; m = row['m_name']; batch_raw = str(row.iloc[2]).strip().upper()
+            m = row['m_name']; batch_raw = str(row.iloc[2]).strip().upper()
             if batch_raw in ['NAN', '']: continue
-            is_status_only = any(k in batch_raw for k in self.status_keywords); dty_std = "__STATUS__" if is_status_only else self.standardize_id(batch_raw); key = (m, dty_std)
-            occ, d_count = row['occ'], row['d_count']; at_val_44 = str(row.iloc[44]).strip(); at_val_45 = str(row.iloc[45]).strip(); is_full = (at_val_44 == "全" or at_val_45 == "全")
+            
+            is_status_only = any(k in batch_raw for k in self.status_keywords)
+            dty_std = "__STATUS__" if is_status_only else self.standardize_id(batch_raw)
+            
+            # 1. 產量累計邏輯 (只針對庫存表日期之後的非狀態批號)
+            if stock_cutoff_date and d > stock_cutoff_date and not is_status_only:
+                inv_key = self.get_inventory_key(batch_raw)
+                td_for_stock = pd.to_numeric(row.iloc[47], errors='coerce') or 0
+                if td_for_stock > 0:
+                    if inv_key not in stock_data:
+                        stock_data[inv_key] = {'A': 0, 'AX': 0, 'B': 0, 'C': 0}
+                    stock_data[inv_key]['A'] += (td_for_stock * 1000)
+
+            # 2. 任務與狀態處理邏輯
+            key = (m, dty_std)
+            occ, d_count = row['occ'], row['d_count']
+            at_val_44 = str(row.iloc[44]).strip()
+            at_val_45 = str(row.iloc[45]).strip()
+            is_full = (at_val_44 == "全" or at_val_45 == "全")
+            
             sides = []
             if d_count >= 2:
                 if occ == 1: sides.append("A" if re.match(r'^A', m) else "L")
@@ -218,17 +222,26 @@ class RealityLogAnalyzer:
             else:
                 if is_full: sides = ["A", "B"] if re.match(r'^A', m) else ["L", "R"]
                 else:
-                    a_v = [row.iloc[11], row.iloc[15], row.iloc[19], row.iloc[23]]; b_v = [row.iloc[12], row.iloc[16], row.iloc[20], row.iloc[24]]
+                    a_v = [row.iloc[11], row.iloc[15], row.iloc[19], row.iloc[23]]
+                    b_v = [row.iloc[12], row.iloc[16], row.iloc[20], row.iloc[24]]
                     if any(not pd.isna(v) and str(v).strip() != "" for v in a_v): sides.append("A" if re.match(r'^A', m) else "L")
                     if any(not pd.isna(v) and str(v).strip() != "" for v in b_v): sides.append("B" if re.match(r'^A', m) else "R")
+            
             if key not in tasks:
-                tasks[key] = {'machine': m, 'dty_batch': "---" if is_status_only else batch_raw, 'dty_std': dty_std, 'poy_list': [], 'spec': str(row.iloc[4]).strip() if not is_status_only else "---", 'sides': set(), 'active_sides': set(), 'days': 0, 'last_status': "", 'last_td': 0, 'total_td': 0, 'is_active': False, 'last_date': d, 'stock': {'A': 0, 'AX': 0, 'B': 0, 'C': 0}}
+                tasks[key] = {
+                    'machine': m, 'dty_batch': "---" if is_status_only else batch_raw, 
+                    'dty_std': dty_std, 'poy_list': [], 
+                    'spec': str(row.iloc[4]).strip() if not is_status_only else "---", 
+                    'sides': set(), 'active_sides': set(), 'days': 0, 'last_status': "", 
+                    'last_td': 0, 'total_td': 0, 'is_active': False, 'last_date': d, 
+                    'stock': {'A': 0, 'AX': 0, 'B': 0, 'C': 0}
+                }
+            
             t = tasks[key]; td = pd.to_numeric(row.iloc[47], errors='coerce') or 0
             
             # --- 核心狀態判斷邏輯 ---
             if m in ['S1', 'S2']:
-                # S1, S2 專用邏輯：查看 AT 欄位 (Index 45)
-                at_val = str(row.iloc[45]).strip().upper()
+                at_val = at_val_45.upper()
                 match = re.search(r'(\d+)SEC', at_val)
                 if match:
                     num = int(match.group(1))
@@ -237,18 +250,14 @@ class RealityLogAnalyzer:
                 else:
                     eff_status = at_val if at_val and at_val != 'NAN' else "停機"
             else:
-                # 一般機台邏輯：根據使用者人工判斷邏輯 (X/Y 欄位)
-                # X 欄 (Index 23) = L 邊最終效率/狀態, Y 欄 (Index 24) = R 邊最終效率/狀態
                 x_val = str(row.iloc[23]).strip().upper() if not pd.isna(row.iloc[23]) else ""
                 y_val = str(row.iloc[24]).strip().upper() if not pd.isna(row.iloc[24]) else ""
 
                 def get_side_status(val):
                     if not val or val == '0' or val == 'NAN': return "停機"
                     try:
-                        float(val) # 如果是數字，代表正在運行且有效率
-                        return ""
-                    except ValueError:
-                        return val # 文字則直接顯示
+                        float(val); return ""
+                    except ValueError: return val
 
                 l_stat = get_side_status(x_val)
                 r_stat = get_side_status(y_val)
@@ -260,30 +269,27 @@ class RealityLogAnalyzer:
                     if inv_key in stock_data: t['stock'] = stock_data[inv_key]
                     
                     if d_count >= 2:
-                        # 雙列模式
                         eff_status = l_stat if occ == 1 else r_stat
                     else:
-                        # 單列模式
-                        if l_stat == "停機" and r_stat == "停機":
-                            eff_status = "全台停機"
-                        elif l_stat == "停機":
-                            eff_status = "L邊停機"
-                        elif r_stat == "停機":
-                            eff_status = "R邊停機"
+                        if l_stat == "停機" and r_stat == "停機": eff_status = "全台停機"
+                        elif l_stat == "停機": eff_status = "L邊停機"
+                        elif r_stat == "停機": eff_status = "R邊停機"
                         else:
                             if l_stat and r_stat:
                                 eff_status = f"{l_stat}/{r_stat}" if l_stat != r_stat else l_stat
                             else:
                                 eff_status = l_stat or r_stat
-            # --------------------------------------------------
+            
             poy_batch_raw = str(row.iloc[5]).strip().upper()
             if poy_batch_raw and poy_batch_raw != 'NAN' and not is_status_only:
                 poy_clean_id = self.clean_poy_id(poy_batch_raw)
                 if not any(p['batch'] == poy_batch_raw for p in t['poy_list']):
                     p_info = {'batch': poy_batch_raw, 'clean_id': poy_clean_id, 'stock_a_a2': 0, 'spec': '---', 'history': '---', 'grades': '---'}
                     if poy_clean_id in poy_data:
-                        ext = poy_data[poy_clean_id]; p_info.update({'stock_a_a2': ext['stock_a_a2'], 'spec': ext['spec'], 'history': ext['history_text'], 'grades': ext['grade_text']})
+                        ext = poy_data[poy_clean_id]
+                        p_info.update({'stock_a_a2': ext['stock_a_a2'], 'spec': ext['spec'], 'history': ext['history_text'], 'grades': ext['grade_text']})
                     t['poy_list'].append(p_info)
+            
             if td > 0: t['days'] += 1; t['total_td'] += td
             if d == latest_date:
                 t['is_active'] = True
