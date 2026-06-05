@@ -172,10 +172,19 @@ class RealityLogAnalyzer:
         files = [f for f in glob.glob(os.path.join(self.base_dir, "*撚二科生產資訊.xlsx")) if not os.path.basename(f).startswith('~$')]
         if not files: raise FileNotFoundError("找不到生產資訊檔案")
         file_path = sorted(files, key=os.path.getmtime, reverse=True)[0]; xl = pd.ExcelFile(file_path); df = xl.parse(xl.sheet_names[1])
-        df.iloc[:, 0] = pd.to_datetime(df.iloc[:, 0], errors='coerce'); latest_date = df.iloc[:, 0].max()
+        df.iloc[:, 0] = pd.to_datetime(df.iloc[:, 0], errors='coerce')
+        
+        # --- [優化] 狀態基準日邏輯 ---
+        # 取得所有不重複日期並排序
+        unique_dates = sorted(df.iloc[:, 0].dropna().unique(), reverse=True)
+        # 絕對最新日 (用於產量累計與判斷完工)
+        abs_latest_date = unique_dates[0] if unique_dates else None
+        # 狀態基準日 (若有兩天以上，用倒數第二個；否則用最新的)
+        status_ref_date = unique_dates[1] if len(unique_dates) > 1 else abs_latest_date
         
         # 取得庫存表日期，用於判斷哪些生產量需要累計 (避免重複計算)
         try:
+            stock_update_date = self.get_monthly_summary()[1]
             stock_cutoff_date = pd.to_datetime(stock_update_date, errors='coerce')
         except:
             stock_cutoff_date = None
@@ -199,7 +208,7 @@ class RealityLogAnalyzer:
             is_status_only = any(k in batch_raw for k in self.status_keywords)
             dty_std = "__STATUS__" if is_status_only else self.standardize_id(batch_raw)
             
-            # 1. 產量累計邏輯 (只針對庫存表日期之後的非狀態批號)
+            # 1. 產量累計邏輯 (維持使用絕對日期，包含最新一天的產量)
             if stock_cutoff_date and d > stock_cutoff_date and not is_status_only:
                 inv_key = self.get_inventory_key(batch_raw)
                 td_for_stock = pd.to_numeric(row.iloc[47], errors='coerce') or 0
@@ -291,11 +300,14 @@ class RealityLogAnalyzer:
                     t['poy_list'].append(p_info)
             
             if td > 0: t['days'] += 1; t['total_td'] += td
-            if d == latest_date:
+            
+            # 使用基準日判斷是否運行中
+            if d == status_ref_date:
                 t['is_active'] = True
                 if eff_status and eff_status not in t['last_status']: t['last_status'] = (t['last_status'] + " " + eff_status).strip()
                 t['last_td'] = td
                 if sides: t['active_sides'].update(sides)
+            
             if sides: t['sides'].update(sides)
             if d > t['last_date']: t['last_date'] = d
         for t in tasks.values():
@@ -314,7 +326,11 @@ class RealityLogAnalyzer:
         for t in tasks.values():
             for p in t['poy_list']:
                 pid = p['clean_id']; p['support_days'] = poy_analysis[pid]['support_days'] if pid in poy_analysis else 999
-        unique_dates = sorted(df.iloc[:, 0].dropna().unique(), reverse=True); summary_prod_date_obj = unique_dates[1] if len(unique_dates) > 1 else latest_date; latest_daily_sum = df[df.iloc[:, 0] == summary_prod_date_obj].iloc[:, 47].apply(pd.to_numeric, errors='coerce').sum()
+        
+        # 結算日與產量統計
+        summary_prod_date_obj = unique_dates[1] if len(unique_dates) > 1 else abs_latest_date
+        latest_daily_sum = df[df.iloc[:, 0] == summary_prod_date_obj].iloc[:, 47].apply(pd.to_numeric, errors='coerce').sum()
+        
         for t in tasks.values():
             m = t['machine']; dty_std = t['dty_std']; t['quality'] = quality_data.get(dty_std, {'a_rate': None, 'fixed_weight_rate': None})
             t['target_kg'] = target_aggregate.get((m, dty_std), 0)
@@ -327,4 +343,12 @@ class RealityLogAnalyzer:
                         current_idx = i; t['remark'] = p_item.get('remark', ""); break
                 if current_idx != -1 and current_idx + 1 < len(p_queue): t['next_plan'] = p_queue[current_idx + 1]
                 elif current_idx == -1 and len(p_queue) > 0: t['next_plan'] = p_queue[0]
-        return {'tasks': list(tasks.values()), 'self_produced_weight': summary_val, 'stock_update_date': stock_update_date, 'production_date': latest_date.strftime('%Y/%m/%d') if pd.notnull(latest_date) else "Unknown", 'poy_analysis': poy_analysis, 'latest_daily_sum': latest_daily_sum, 'summary_prod_date': summary_prod_date_obj.strftime('%Y/%m/%d') if pd.notnull(summary_prod_date_obj) else "Unknown"}
+        return {
+            'tasks': list(tasks.values()), 
+            'self_produced_weight': summary_val, 
+            'stock_update_date': stock_update_date, 
+            'production_date': status_ref_date.strftime('%Y/%m/%d') if pd.notnull(status_ref_date) else "Unknown", 
+            'poy_analysis': poy_analysis, 
+            'latest_daily_sum': latest_daily_sum, 
+            'summary_prod_date': summary_prod_date_obj.strftime('%Y/%m/%d') if pd.notnull(summary_prod_date_obj) else "Unknown"
+        }
