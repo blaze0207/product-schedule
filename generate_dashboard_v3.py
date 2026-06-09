@@ -244,6 +244,32 @@ def generate_v3_html(result):
         .q-bad { background: #fef2f2; color: #991b1b; }
         .q-label { opacity: 0.6; font-weight: 500; font-size: 10px; }
 
+        /* 密碼登入遮罩 */
+        #login-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: var(--primary); z-index: 9999;
+            display: flex; flex-direction: column; justify-content: center; align-items: center;
+            color: white; transition: all 0.5s;
+        }
+        .login-box {
+            background: white; padding: 40px; border-radius: 20px;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.3);
+            width: 90%; max-width: 400px; text-align: center; color: var(--text-main);
+        }
+        .login-box h2 { margin-bottom: 20px; font-weight: 900; color: var(--primary); }
+        .login-input {
+            width: 100%; padding: 15px; border-radius: 10px; border: 2px solid var(--border);
+            margin-bottom: 20px; font-size: 18px; text-align: center; outline: none;
+        }
+        .login-input:focus { border-color: var(--accent); }
+        .login-btn {
+            width: 100%; padding: 15px; border-radius: 10px; border: none;
+            background: var(--accent); color: white; font-weight: 800; font-size: 18px;
+            cursor: pointer; transition: all 0.3s;
+        }
+        .login-btn:hover { background: #2563eb; transform: translateY(-2px); }
+        .login-error { color: var(--danger); font-size: 14px; margin-top: 10px; font-weight: 700; display: none; }
+
         /* POY 整合互動膠囊 */
         .poy-wrapper { display: flex; flex-direction: column; gap: 10px; }
         .poy-card { 
@@ -332,6 +358,15 @@ def generate_v3_html(result):
     </style>
 </head>
 <body>
+    <div id="login-overlay">
+        <div class="login-box">
+            <h2>撚二科生產戰情室</h2>
+            <p style="margin-bottom:20px; color:var(--text-muted);">請輸入密碼以進入系統</p>
+            <input type="password" id="password-input" class="login-input" placeholder="請輸入密碼..." onkeydown="if(event.key==='Enter') verifyPassword()">
+            <button class="login-btn" onclick="verifyPassword()">登入系統</button>
+            <div id="login-error" class="login-error">密碼錯誤，請重新輸入</div>
+        </div>
+    </div>
     <header class="top-header">
         <div style="display: flex; align-items: center; gap: 20px;">
             <h1>撚二科生產戰情室</h1>
@@ -412,6 +447,35 @@ def generate_v3_html(result):
     </div>
 
     <script>
+        // 密碼保護邏輯
+        const AUTH_KEY = 'fenc_auth_success';
+        const CORRECT_PWD = 'fencdty';
+
+        function verifyPassword() {
+            const input = document.getElementById('password-input').value;
+            const error = document.getElementById('login-error');
+            if (input === CORRECT_PWD) {
+                sessionStorage.setItem(AUTH_KEY, 'true');
+                document.getElementById('login-overlay').style.opacity = '0';
+                setTimeout(() => {
+                    document.getElementById('login-overlay').style.display = 'none';
+                }, 500);
+            } else {
+                error.style.display = 'block';
+                document.getElementById('password-input').value = '';
+                document.getElementById('password-input').focus();
+            }
+        }
+
+        // 頁面載入檢查
+        window.addEventListener('DOMContentLoaded', () => {
+            if (sessionStorage.getItem(AUTH_KEY) === 'true') {
+                document.getElementById('login-overlay').style.display = 'none';
+            } else {
+                document.getElementById('password-input').focus();
+            }
+        });
+
         const rawData = VAR_JSON;
         const poyAnalysis = VAR_POY_JSON;
         const tbody = document.getElementById('tableBody');

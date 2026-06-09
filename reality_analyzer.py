@@ -181,7 +181,7 @@ class RealityLogAnalyzer:
         abs_latest_date = unique_dates[0] if unique_dates else None
         # 狀態基準日 (若有兩天以上，用倒數第二個；否則用最新的)
         status_ref_date = unique_dates[1] if len(unique_dates) > 1 else abs_latest_date
-        
+
         # 取得庫存表日期，用於判斷哪些生產量需要累計 (避免重複計算)
         try:
             stock_update_date = self.get_monthly_summary()[1]
@@ -279,8 +279,12 @@ class RealityLogAnalyzer:
                     
                     if d_count >= 2:
                         eff_status = l_stat if occ == 1 else r_stat
+                        if is_full and eff_status == "停機": eff_status = "" # 全台標註優先
                     else:
-                        if l_stat == "停機" and r_stat == "停機": eff_status = "全台停機"
+                        if is_full:
+                            # 如果標註全台，只要沒有特殊文字，就視為運行
+                            eff_status = "" if (l_stat == "停機" and r_stat == "停機") else (l_stat if l_stat != "停機" else r_stat)
+                        elif l_stat == "停機" and r_stat == "停機": eff_status = "全台停機"
                         elif l_stat == "停機": eff_status = "L邊停機"
                         elif r_stat == "停機": eff_status = "R邊停機"
                         else:
