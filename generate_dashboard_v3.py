@@ -608,16 +608,21 @@ def generate_v3_html(result):
                     panel.style.display = 'block';
                     const color = info.support_days < 3 ? 'var(--danger)' : 'var(--accent)';
                     panel.innerHTML = `
-                        <div style="display:flex; justify-content:space-between; align-items:center;">
-                            <div>
+                        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
+                            <div style="flex: 1; min-width: 250px;">
                                 <div style="font-size:14px; color:var(--text-muted); font-weight:800; margin-bottom:10px;">POY ANALYSIS SYSTEM:</div>
                                 <div style="font-weight:900; font-size:26px; color:var(--primary);">${matchedKey} <span style="font-size:16px; font-weight:500; color:var(--text-muted); margin-left:15px;">${info.spec}</span></div>
                                 <div style="font-size:16px; margin-top:10px;">共用機台: <span style="color:var(--accent); font-weight:900;">${info.machines_text}</span></div>
                             </div>
-                            <div style="text-align:right; border-left:3px solid var(--border); padding-left:40px;">
+                            <div style="text-align:center; border-left:3px solid var(--border); padding: 0 30px; min-width: 180px;">
+                                <div style="font-size:15px; color:var(--text-muted); font-weight:800;">全場日耗總計</div>
+                                <div style="font-size:38px; font-weight:900; color:var(--primary); line-height:1;">${info.total_avg_td.toFixed(2)} <span style="font-size:16px;">T/Day</span></div>
+                                <div style="font-size:13px; color:var(--text-muted); margin-top:10px;">庫存: ${info.stock_a_a2.toLocaleString()} KG</div>
+                            </div>
+                            <div style="text-align:right; border-left:3px solid var(--border); padding-left:30px; min-width: 180px;">
                                 <div style="font-size:15px; color:var(--text-muted); font-weight:800;">預估全場支撐</div>
-                                <div style="font-size:42px; font-weight:900; color:${color}; line-height:1;">${info.support_days.toFixed(2)} <span style="font-size:18px;">DAYS</span></div>
-                                <div style="font-size:14px; color:var(--text-muted); margin-top:10px;">庫存 ${info.stock_a_a2.toLocaleString()} KG / 日耗 ${(info.total_avg_td*1000).toLocaleString()} KG</div>
+                                <div style="font-size:38px; font-weight:900; color:${color}; line-height:1;">${info.support_days.toFixed(2)} <span style="font-size:16px;">DAYS</span></div>
+                                <div style="font-size:13px; color:var(--text-muted); margin-top:10px;">(依當前產速預估)</div>
                             </div>
                         </div>
                     `;

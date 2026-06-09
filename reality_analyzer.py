@@ -255,7 +255,15 @@ class RealityLogAnalyzer:
                 
                 # 方案 B：如果批號是停機關鍵字，或是 AT 欄位明確標註停機，則不解析 SEC
                 if is_status_only or is_at_downtime:
-                    eff_status = at_val if at_val and at_val != 'NAN' else "停機"
+                    # 移除描述中的 SEC 資訊 (如 12SEC)，只保留純文字狀態
+                    clean_status = re.sub(r'\d+SEC', '', at_val).strip()
+                    base_status = clean_status if clean_status and clean_status != 'NAN' else "停機"
+                    
+                    # 確保包含停機關鍵字，以便前端正確顯示紅燈
+                    if any(k in base_status for k in self.status_keywords):
+                        eff_status = base_status
+                    else:
+                        eff_status = f"停機 {base_status}".strip()
                 else:
                     match = re.search(r'(\d+)SEC', at_val)
                     if match:
