@@ -251,13 +251,19 @@ class RealityLogAnalyzer:
             # --- 核心狀態判斷邏輯 ---
             if m in ['S1', 'S2']:
                 at_val = at_val_45.upper()
-                match = re.search(r'(\d+)SEC', at_val)
-                if match:
-                    num = int(match.group(1))
-                    rem = max(0, 12 - num)
-                    eff_status = f"{num}Sec生產中, {rem}Sec停機"
-                else:
+                is_at_downtime = any(k in at_val for k in self.status_keywords)
+                
+                # 方案 B：如果批號是停機關鍵字，或是 AT 欄位明確標註停機，則不解析 SEC
+                if is_status_only or is_at_downtime:
                     eff_status = at_val if at_val and at_val != 'NAN' else "停機"
+                else:
+                    match = re.search(r'(\d+)SEC', at_val)
+                    if match:
+                        num = int(match.group(1))
+                        rem = max(0, 12 - num)
+                        eff_status = f"{num}Sec生產中, {rem}Sec停機"
+                    else:
+                        eff_status = at_val if at_val and at_val != 'NAN' else "停機"
             else:
                 x_val = str(row.iloc[23]).strip().upper() if not pd.isna(row.iloc[23]) else ""
                 y_val = str(row.iloc[24]).strip().upper() if not pd.isna(row.iloc[24]) else ""

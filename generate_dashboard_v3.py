@@ -520,7 +520,13 @@ def generate_v3_html(result):
                 
                 // --- S1/S2 特殊加總邏輯 ---
                 if (d.machine === 'S1') {
-                    // S1: 根據 SEC 判定權重
+                    // 方案 B：優先檢查批號，如果批號是 "---" (停機狀態任務)，直接計為停機
+                    if (d.dty_batch === '---') {
+                        stopCount += 1.0;
+                        return;
+                    }
+
+                    // 批號有效時，才依據 SEC 判定權重
                     const statStr = d.last_status || "";
                     const match = statStr.match(/(\d+)SEC/i);
                     if (match) {
@@ -644,12 +650,16 @@ def generate_v3_html(result):
             if (isActive) {
                 if (d.dty_batch === '---') {
                     const displayStatus = d.last_status || '停機';
-                    const isStop = displayStatus.includes('停機');
+                    // 擴充停機關鍵字判定
+                    const stopKeywords = ["停機", "了機", "改紡", "清車", "檢修", "待料", "待機", "SAMPLE", "TEST"];
+                    const isStop = stopKeywords.some(k => displayStatus.includes(k)) || displayStatus === "---";
+                    
                     statusHtml = `<div class="status-indicator"><span class="dot" style="background:${isStop ? 'var(--danger)' : '#94a3b8'}"></span><span style="color:${isStop ? 'var(--danger)' : 'var(--text-muted)'}; font-weight:900;">${displayStatus}</span></div>`;
                 } else {
                     statusHtml = `<div class="status-indicator"><span class="dot dot-running"></span><span style="color:var(--success); font-weight:900;">運行中</span></div>`;
                     if (d.last_status) {
-                        const isStop = d.last_status.includes('停機');
+                        const stopKeywords = ["停機", "了機", "改紡", "清車", "檢修", "待料", "待機"];
+                        const isStop = stopKeywords.some(k => d.last_status.includes(k));
                         statusHtml += `<div style="font-size:14px; color:${isStop ? 'var(--danger)' : 'var(--warning)'}; margin-top:8px; font-weight:800;">[${d.last_status}]</div>`;
                     }
                 }
