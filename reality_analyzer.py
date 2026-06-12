@@ -181,7 +181,7 @@ class RealityLogAnalyzer:
         abs_latest_date = unique_dates[0] if unique_dates else None
         # 狀態基準日 (若有兩天以上，用倒數第二個；否則用最新的)
         status_ref_date = unique_dates[1] if len(unique_dates) > 1 else abs_latest_date
-        
+
         # 取得庫存表日期，用於判斷哪些生產量需要累計 (避免重複計算)
         try:
             stock_update_date = self.get_monthly_summary()[1]
@@ -251,13 +251,27 @@ class RealityLogAnalyzer:
             # --- 核心狀態判斷邏輯 ---
             if m in ['S1', 'S2']:
                 at_val = at_val_45.upper()
-                match = re.search(r'(\d+)SEC', at_val)
-                if match:
-                    num = int(match.group(1))
-                    rem = max(0, 12 - num)
-                    eff_status = f"{num}Sec生產中, {rem}Sec停機"
+                is_at_downtime = any(k in at_val for k in self.status_keywords)
+                
+                # 方案 B：如果批號是停機關鍵字，或是 AT 欄位明確標註停機，則不解析 SEC
+                if is_status_only or is_at_downtime:
+                    # 移除描述中的 SEC 資訊 (如 12SEC)，只保留純文字狀態
+                    clean_status = re.sub(r'\d+SEC', '', at_val).strip()
+                    base_status = clean_status if clean_status and clean_status != 'NAN' else "停機"
+                    
+                    # 確保包含停機關鍵字，以便前端正確顯示紅燈
+                    if any(k in base_status for k in self.status_keywords):
+                        eff_status = base_status
+                    else:
+                        eff_status = f"停機 {base_status}".strip()
                 else:
-                    eff_status = at_val if at_val and at_val != 'NAN' else "停機"
+                    match = re.search(r'(\d+)SEC', at_val)
+                    if match:
+                        num = int(match.group(1))
+                        rem = max(0, 12 - num)
+                        eff_status = f"{num}Sec生產中, {rem}Sec停機"
+                    else:
+                        eff_status = at_val if at_val and at_val != 'NAN' else "停機"
             else:
                 x_val = str(row.iloc[23]).strip().upper() if not pd.isna(row.iloc[23]) else ""
                 y_val = str(row.iloc[24]).strip().upper() if not pd.isna(row.iloc[24]) else ""
@@ -279,8 +293,12 @@ class RealityLogAnalyzer:
                     
                     if d_count >= 2:
                         eff_status = l_stat if occ == 1 else r_stat
+                        if is_full and eff_status == "停機": eff_status = "" # 全台標註優先
                     else:
-                        if l_stat == "停機" and r_stat == "停機": eff_status = "全台停機"
+                        if is_full:
+                            # 如果標註全台，只要沒有特殊文字，就視為運行
+                            eff_status = "" if (l_stat == "停機" and r_stat == "停機") else (l_stat if l_stat != "停機" else r_stat)
+                        elif l_stat == "停機" and r_stat == "停機": eff_status = "全台停機"
                         elif l_stat == "停機": eff_status = "L邊停機"
                         elif r_stat == "停機": eff_status = "R邊停機"
                         else:

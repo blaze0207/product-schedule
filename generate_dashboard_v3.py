@@ -244,6 +244,32 @@ def generate_v3_html(result):
         .q-bad { background: #fef2f2; color: #991b1b; }
         .q-label { opacity: 0.6; font-weight: 500; font-size: 10px; }
 
+        /* 密碼登入遮罩 */
+        #login-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: var(--primary); z-index: 9999;
+            display: flex; flex-direction: column; justify-content: center; align-items: center;
+            color: white; transition: all 0.5s;
+        }
+        .login-box {
+            background: white; padding: 40px; border-radius: 20px;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.3);
+            width: 90%; max-width: 400px; text-align: center; color: var(--text-main);
+        }
+        .login-box h2 { margin-bottom: 20px; font-weight: 900; color: var(--primary); }
+        .login-input {
+            width: 100%; padding: 15px; border-radius: 10px; border: 2px solid var(--border);
+            margin-bottom: 20px; font-size: 18px; text-align: center; outline: none;
+        }
+        .login-input:focus { border-color: var(--accent); }
+        .login-btn {
+            width: 100%; padding: 15px; border-radius: 10px; border: none;
+            background: var(--accent); color: white; font-weight: 800; font-size: 18px;
+            cursor: pointer; transition: all 0.3s;
+        }
+        .login-btn:hover { background: #2563eb; transform: translateY(-2px); }
+        .login-error { color: var(--danger); font-size: 14px; margin-top: 10px; font-weight: 700; display: none; }
+
         /* POY 整合互動膠囊 */
         .poy-wrapper { display: flex; flex-direction: column; gap: 10px; }
         .poy-card { 
@@ -332,6 +358,15 @@ def generate_v3_html(result):
     </style>
 </head>
 <body>
+    <div id="login-overlay">
+        <div class="login-box">
+            <h2>撚二科生產戰情室</h2>
+            <p style="margin-bottom:20px; color:var(--text-muted);">請輸入密碼以進入系統</p>
+            <input type="password" id="password-input" class="login-input" placeholder="請輸入密碼..." onkeydown="if(event.key==='Enter') verifyPassword()">
+            <button class="login-btn" onclick="verifyPassword()">登入系統</button>
+            <div id="login-error" class="login-error">密碼錯誤，請重新輸入</div>
+        </div>
+    </div>
     <header class="top-header">
         <div style="display: flex; align-items: center; gap: 20px;">
             <h1>撚二科生產戰情室</h1>
@@ -412,6 +447,35 @@ def generate_v3_html(result):
     </div>
 
     <script>
+        // 密碼保護邏輯
+        const AUTH_KEY = 'fenc_auth_success';
+        const CORRECT_PWD = 'fencdty';
+
+        function verifyPassword() {
+            const input = document.getElementById('password-input').value;
+            const error = document.getElementById('login-error');
+            if (input === CORRECT_PWD) {
+                sessionStorage.setItem(AUTH_KEY, 'true');
+                document.getElementById('login-overlay').style.opacity = '0';
+                setTimeout(() => {
+                    document.getElementById('login-overlay').style.display = 'none';
+                }, 500);
+            } else {
+                error.style.display = 'block';
+                document.getElementById('password-input').value = '';
+                document.getElementById('password-input').focus();
+            }
+        }
+
+        // 頁面載入檢查
+        window.addEventListener('DOMContentLoaded', () => {
+            if (sessionStorage.getItem(AUTH_KEY) === 'true') {
+                document.getElementById('login-overlay').style.display = 'none';
+            } else {
+                document.getElementById('password-input').focus();
+            }
+        });
+
         const rawData = VAR_JSON;
         const poyAnalysis = VAR_POY_JSON;
         const tbody = document.getElementById('tableBody');
@@ -456,7 +520,13 @@ def generate_v3_html(result):
                 
                 // --- S1/S2 特殊加總邏輯 ---
                 if (d.machine === 'S1') {
-                    // S1: 根據 SEC 判定權重
+                    // 方案 B：優先檢查批號，如果批號是 "---" (停機狀態任務)，直接計為停機
+                    if (d.dty_batch === '---') {
+                        stopCount += 1.0;
+                        return;
+                    }
+
+                    // 批號有效時，才依據 SEC 判定權重
                     const statStr = d.last_status || "";
                     const match = statStr.match(/(\d+)SEC/i);
                     if (match) {
@@ -538,16 +608,21 @@ def generate_v3_html(result):
                     panel.style.display = 'block';
                     const color = info.support_days < 3 ? 'var(--danger)' : 'var(--accent)';
                     panel.innerHTML = `
-                        <div style="display:flex; justify-content:space-between; align-items:center;">
-                            <div>
+                        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
+                            <div style="flex: 1; min-width: 250px;">
                                 <div style="font-size:14px; color:var(--text-muted); font-weight:800; margin-bottom:10px;">POY ANALYSIS SYSTEM:</div>
                                 <div style="font-weight:900; font-size:26px; color:var(--primary);">${matchedKey} <span style="font-size:16px; font-weight:500; color:var(--text-muted); margin-left:15px;">${info.spec}</span></div>
                                 <div style="font-size:16px; margin-top:10px;">共用機台: <span style="color:var(--accent); font-weight:900;">${info.machines_text}</span></div>
                             </div>
-                            <div style="text-align:right; border-left:3px solid var(--border); padding-left:40px;">
+                            <div style="text-align:center; border-left:3px solid var(--border); padding: 0 30px; min-width: 180px;">
+                                <div style="font-size:15px; color:var(--text-muted); font-weight:800;">全場日耗總計</div>
+                                <div style="font-size:38px; font-weight:900; color:var(--primary); line-height:1;">${info.total_avg_td.toFixed(2)} <span style="font-size:16px;">T/Day</span></div>
+                                <div style="font-size:13px; color:var(--text-muted); margin-top:10px;">庫存: ${info.stock_a_a2.toLocaleString()} KG</div>
+                            </div>
+                            <div style="text-align:right; border-left:3px solid var(--border); padding-left:30px; min-width: 180px;">
                                 <div style="font-size:15px; color:var(--text-muted); font-weight:800;">預估全場支撐</div>
-                                <div style="font-size:42px; font-weight:900; color:${color}; line-height:1;">${info.support_days.toFixed(2)} <span style="font-size:18px;">DAYS</span></div>
-                                <div style="font-size:14px; color:var(--text-muted); margin-top:10px;">庫存 ${info.stock_a_a2.toLocaleString()} KG / 日耗 ${(info.total_avg_td*1000).toLocaleString()} KG</div>
+                                <div style="font-size:38px; font-weight:900; color:${color}; line-height:1;">${info.support_days.toFixed(2)} <span style="font-size:16px;">DAYS</span></div>
+                                <div style="font-size:13px; color:var(--text-muted); margin-top:10px;">(依當前產速預估)</div>
                             </div>
                         </div>
                     `;
@@ -580,12 +655,16 @@ def generate_v3_html(result):
             if (isActive) {
                 if (d.dty_batch === '---') {
                     const displayStatus = d.last_status || '停機';
-                    const isStop = displayStatus.includes('停機');
+                    // 擴充停機關鍵字判定
+                    const stopKeywords = ["停機", "了機", "改紡", "清車", "檢修", "待料", "待機", "SAMPLE", "TEST"];
+                    const isStop = stopKeywords.some(k => displayStatus.includes(k)) || displayStatus === "---";
+                    
                     statusHtml = `<div class="status-indicator"><span class="dot" style="background:${isStop ? 'var(--danger)' : '#94a3b8'}"></span><span style="color:${isStop ? 'var(--danger)' : 'var(--text-muted)'}; font-weight:900;">${displayStatus}</span></div>`;
                 } else {
                     statusHtml = `<div class="status-indicator"><span class="dot dot-running"></span><span style="color:var(--success); font-weight:900;">運行中</span></div>`;
                     if (d.last_status) {
-                        const isStop = d.last_status.includes('停機');
+                        const stopKeywords = ["停機", "了機", "改紡", "清車", "檢修", "待料", "待機"];
+                        const isStop = stopKeywords.some(k => d.last_status.includes(k));
                         statusHtml += `<div style="font-size:14px; color:${isStop ? 'var(--danger)' : 'var(--warning)'}; margin-top:8px; font-weight:800;">[${d.last_status}]</div>`;
                     }
                 }
